@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model RestaurantUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  restaurant Restaurant?
+  
+  @@map("restaurant_users")
+}
+
+model Restaurant {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  name              String
+  logoUrl           String?
+  address           String
+  reservationDeposit Float   @default(0)
+  averageSeatingTime Int    @default(60) // in minutes
+  tableLayout       String[] // Array of table identifiers like ["T1", "T2", "TB01"]
+  cuisines          String[] // Array of cuisine types
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  user              RestaurantUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reservations      Reservation[]
+  invitations       ReservationInvitation[]
+  
+  @@map("restaurants")
+}
+
+model ReservationInvitation {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  phoneNumber   String
+  status        InvitationStatus @default(PENDING)
+  invitationType InvitationType @default(WHATSAPP)
+  webFormToken  String?  @unique // Unique token for web form link
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  expiresAt     DateTime?
+  
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  reservation   Reservation?
+  
+  @@map("reservation_invitations")
+}
+
+model Reservation {
+  id                String   @id @default(cuid())
+  restaurantId      String
+  invitationId      String?  @unique
+  guestName         String
+  guestContact      String   // phone or email
+  numberOfPeople    Int
+  timeFrom          DateTime
+  timeTo            DateTime
+  tableId           String?  // Table identifier from tableLayout
+  status            ReservationStatus @default(CONFIRMED)
+  depositPaid       Boolean  @default(false)
+  depositAmount     Float
+  paymentGateway    String?  // e.g., "stripe", "paymob"
+  paymentReference  String?  // Payment transaction reference
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  restaurant        Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  invitation        ReservationInvitation? @relation(fields: [invitationId], references: [id])
+  
+  @@map("reservations")
+}
+
+enum InvitationStatus {
+  PENDING
+  SENT
+  COMPLETED
+  EXPIRED
+}
+
+enum InvitationType {
+  WHATSAPP
+  SMS
+  WEB_FORM
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  SEATED
+  COMPLETED
+  CANCELLED
+}
+
