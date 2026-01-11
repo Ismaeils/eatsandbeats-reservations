@@ -16,11 +16,19 @@ export async function GET(request: NextRequest) {
 
     const restaurant = await prisma.restaurant.findUnique({
       where: { userId },
+      include: {
+        openingHours: true,
+      },
     })
 
     if (!restaurant) {
       return errorResponse('Restaurant not found', 404)
     }
+
+    // Check setup status
+    const hasOpeningHours = restaurant.openingHours.length > 0 && 
+      restaurant.openingHours.some((h) => h.isOpen)
+    const hasTables = restaurant.tableLayout.length > 0
 
     const now = new Date()
     const todayStart = startOfDay(now)
@@ -93,6 +101,11 @@ export async function GET(request: NextRequest) {
         availableTableIds: availableTables,
       },
       currentReservations: currentReservations,
+      setup: {
+        hasOpeningHours,
+        hasTables,
+        isComplete: hasOpeningHours && hasTables,
+      },
     })
   } catch (error) {
     console.error('Get dashboard stats error:', error)

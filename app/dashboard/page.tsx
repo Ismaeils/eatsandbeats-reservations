@@ -6,14 +6,17 @@ import apiClient from '@/lib/api-client'
 import Button from '@/components/Button'
 import Card from '@/components/Card'
 import Layout from '@/components/Layout'
+import ManualReservationDialog from '@/components/ManualReservationDialog'
 import { format, isPast } from 'date-fns'
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null)
+  const [restaurant, setRestaurant] = useState<any>(null)
   const [reservations, setReservations] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [showManualReservation, setShowManualReservation] = useState(false)
 
   useEffect(() => {
     fetchDashboardData()
@@ -29,9 +32,10 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true)
-      const [statsRes, reservationsRes] = await Promise.all([
+      const [statsRes, reservationsRes, restaurantRes] = await Promise.all([
         apiClient.get('/dashboard/stats'),
         apiClient.get('/reservations?status=CONFIRMED'),
+        apiClient.get('/restaurants/me'),
       ]) as any[]
 
       if (statsRes?.success) {
@@ -43,6 +47,9 @@ export default function DashboardPage() {
           .filter((r: any) => !isPast(new Date(r.timeTo)))
           .sort((a: any, b: any) => new Date(a.timeFrom).getTime() - new Date(b.timeFrom).getTime())
         setReservations(upcomingReservations)
+      }
+      if (restaurantRes?.success) {
+        setRestaurant(restaurantRes.data)
       }
     } catch (err: any) {
       setError(err.error || 'Failed to load dashboard data')
@@ -70,19 +77,87 @@ export default function DashboardPage() {
   return (
     <Layout>
       <div className="space-y-8">
-        {/* Header with Send Invitation Button */}
-        <div className="flex justify-between items-center">
+        {/* Header with Action Buttons */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h1 className="text-4xl font-bold text-[var(--text-primary)]">Dashboard</h1>
-          <Link href="/invitations/send">
-            <Button variant="primary" className="text-lg px-8 py-4">
-              Send Reservation Invitation
+          <div className="flex flex-wrap gap-3">
+            <Button 
+              variant="outline" 
+              className="text-base px-6 py-3"
+              onClick={() => setShowManualReservation(true)}
+            >
+              <span className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Create Reservation
+              </span>
             </Button>
-          </Link>
+            <Link href="/invitations/send">
+              <Button variant="primary" className="text-base px-6 py-3">
+                <span className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Send Invitation
+                </span>
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {error && (
           <div className="bg-[var(--error)]/20 border border-[var(--error)]/50 text-[var(--error)] px-4 py-3 rounded-lg">
             {error}
+          </div>
+        )}
+
+        {/* Setup Warnings */}
+        {stats && stats.setup && !stats.setup.isComplete && (
+          <div className="bg-[var(--warning)]/20 border border-[var(--warning)]/50 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-[var(--warning)]/20 rounded-full">
+                <svg className="w-6 h-6 text-[var(--warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-[var(--text-primary)] mb-2">Setup Required</h3>
+                <p className="text-[var(--text-secondary)] text-sm mb-4">
+                  Complete the following to start accepting reservations:
+                </p>
+                <ul className="space-y-2 mb-4">
+                  {!stats.setup.hasTables && (
+                    <li className="flex items-center gap-2 text-sm">
+                      <span className="text-[var(--warning)]">⚠</span>
+                      <span className="text-[var(--text-secondary)]">Add tables to your Floor Plan</span>
+                    </li>
+                  )}
+                  {!stats.setup.hasOpeningHours && (
+                    <li className="flex items-center gap-2 text-sm">
+                      <span className="text-[var(--warning)]">⚠</span>
+                      <span className="text-[var(--text-secondary)]">Configure your Opening Hours</span>
+                    </li>
+                  )}
+                </ul>
+                <div className="flex flex-wrap gap-2">
+                  {!stats.setup.hasTables && (
+                    <Link href="/restaurant/config?tab=floorplan">
+                      <Button variant="primary" className="text-sm">
+                        🗺️ Set Up Floor Plan
+                      </Button>
+                    </Link>
+                  )}
+                  {!stats.setup.hasOpeningHours && (
+                    <Link href="/restaurant/config?tab=hours">
+                      <Button variant={stats.setup.hasTables ? 'primary' : 'outline'} className="text-sm">
+                        🕐 Set Opening Hours
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -275,21 +350,38 @@ export default function DashboardPage() {
             <div className="space-y-4">
               {reservations.slice(0, 10).map((reservation) => {
                 const isPast = isPastReservation(reservation.timeTo)
+                const hasNoTable = !reservation.tableId
                 
                 return (
                   <div
                     key={reservation.id}
-                    className={`bg-[var(--bg-card)] border border-[var(--glass-border)] rounded-lg p-4 transition-all ${
+                    className={`bg-[var(--bg-card)] border rounded-lg p-4 transition-all ${
+                      hasNoTable && !isPast 
+                        ? 'border-[var(--warning)]/50 bg-[var(--warning)]/5' 
+                        : 'border-[var(--glass-border)]'
+                    } ${
                       isPast ? 'opacity-60' : 'hover:border-[var(--color-primary)]/50 hover:shadow-md'
                     }`}
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-                          {reservation.guestName}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+                            {reservation.guestName}
+                          </h3>
+                          {hasNoTable && !isPast && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--warning)]/20 text-[var(--warning)] border border-[var(--warning)]/30">
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                              </svg>
+                              No table
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[var(--text-secondary)] text-sm">
-                          {reservation.numberOfPeople} people • Table: {reservation.tableId || 'TBD'}
+                          {reservation.numberOfPeople} people • Table: {reservation.tableId || (
+                            <span className="text-[var(--warning)]">TBD</span>
+                          )}
                         </p>
                         <p className="text-[var(--text-muted)] text-sm">
                           {format(new Date(reservation.timeFrom), 'MMM dd, yyyy h:mm a')} -{' '}
@@ -311,6 +403,16 @@ export default function DashboardPage() {
           )}
         </Card>
       </div>
+
+      {/* Manual Reservation Dialog */}
+      <ManualReservationDialog
+        isOpen={showManualReservation}
+        onClose={() => setShowManualReservation(false)}
+        onSuccess={() => {
+          fetchDashboardData()
+        }}
+        restaurant={restaurant}
+      />
     </Layout>
   )
 }

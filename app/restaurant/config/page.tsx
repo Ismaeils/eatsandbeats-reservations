@@ -2,12 +2,16 @@
 
 import Button from '@/components/Button'
 import Card from '@/components/Card'
+import FloorPlanEditor from '@/components/FloorPlanEditor'
+import FloorPlanViewer from '@/components/FloorPlanViewer'
 import Input from '@/components/Input'
 import Layout from '@/components/Layout'
 import RestaurantLogo from '@/components/RestaurantLogo'
 import apiClient from '@/lib/api-client'
+import { FloorPlanElement } from '@/types/floor-plan'
 import { format } from 'date-fns'
-import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
 
 const DAYS_OF_WEEK = [
   { value: 0, label: 'Sunday' },
@@ -35,9 +39,28 @@ interface ExceptionalDate {
   note: string | null
 }
 
+interface FloorPlan {
+  id: string
+  name: string
+  order: number
+  width: number
+  height: number
+  elements: FloorPlanElement[]
+  isActive: boolean
+}
+
 export default function RestaurantConfigPage() {
+  const searchParams = useSearchParams()
   const [restaurant, setRestaurant] = useState<any>(null)
-  const [activeTab, setActiveTab] = useState<'general' | 'hours' | 'exceptions'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'hours' | 'exceptions' | 'floorplan'>('general')
+
+  // Set initial tab from URL query parameter
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')
+    if (tabParam && ['general', 'hours', 'exceptions', 'floorplan'].includes(tabParam)) {
+      setActiveTab(tabParam as any)
+    }
+  }, [searchParams])
   
   // General settings
   const [formData, setFormData] = useState({
@@ -46,7 +69,6 @@ export default function RestaurantConfigPage() {
     averageSeatingTime: '',
     reservationDuration: '120',
     slotGranularity: '15',
-    tableLayout: '',
     cuisines: '',
   })
   
@@ -69,11 +91,28 @@ export default function RestaurantConfigPage() {
     closeTime: null,
     note: '',
   })
+
+  // Floor plans
+  const [floorPlans, setFloorPlans] = useState<FloorPlan[]>([])
+  const [editingFloorPlan, setEditingFloorPlan] = useState<FloorPlan | null>(null)
+  const [isCreatingFloor, setIsCreatingFloor] = useState(false)
+  const [newFloorName, setNewFloorName] = useState('')
   
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  const fetchFloorPlans = useCallback(async () => {
+    try {
+      const response = await apiClient.get('/restaurants/floor-plans') as any
+      if (response?.success) {
+        setFloorPlans(response.data || [])
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch floor plans:', err)
+    }
+  }, [])
 
   useEffect(() => {
     fetchAllData()
@@ -82,10 +121,11 @@ export default function RestaurantConfigPage() {
   const fetchAllData = async () => {
     try {
       setIsLoading(true)
-      const [restaurantRes, hoursRes, exceptionsRes] = await Promise.all([
+      const [restaurantRes, hoursRes, exceptionsRes, floorPlansRes] = await Promise.all([
         apiClient.get('/restaurants/me'),
         apiClient.get('/restaurants/opening-hours'),
         apiClient.get('/restaurants/exceptional-dates'),
+        apiClient.get('/restaurants/floor-plans'),
       ]) as any[]
 
       if (restaurantRes?.success) {
@@ -97,7 +137,6 @@ export default function RestaurantConfigPage() {
           averageSeatingTime: res.averageSeatingTime?.toString() || '60',
           reservationDuration: res.reservationDuration?.toString() || '120',
           slotGranularity: res.slotGranularity?.toString() || '15',
-          tableLayout: res.tableLayout?.join(', ') || '',
           cuisines: res.cuisines?.join(', ') || '',
         })
       }
@@ -124,6 +163,10 @@ export default function RestaurantConfigPage() {
           }))
         )
       }
+
+      if (floorPlansRes?.success) {
+        setFloorPlans(floorPlansRes.data || [])
+      }
     } catch (err: any) {
       setError(err.error || 'Failed to load configuration')
     } finally {
@@ -144,7 +187,6 @@ export default function RestaurantConfigPage() {
         averageSeatingTime: parseInt(formData.averageSeatingTime),
         reservationDuration: parseInt(formData.reservationDuration),
         slotGranularity: parseInt(formData.slotGranularity),
-        tableLayout: formData.tableLayout.split(',').map(t => t.trim()).filter(t => t),
         cuisines: formData.cuisines.split(',').map(c => c.trim()).filter(c => c),
       }
 
@@ -247,6 +289,86 @@ export default function RestaurantConfigPage() {
     )
   }
 
+  // Floor Plan handlers
+  const handleCreateFloorPlan = async () => {
+    if (!newFloorName.trim()) {
+      setError('Please enter a floor name')
+      return
+    }
+
+    setError('')
+    setIsSaving(true)
+
+    try {
+      const response = await apiClient.post('/restaurants/floor-plans', {
+        name: newFloorName.trim(),
+        elements: [],
+      }) as any
+      
+      if (response?.success) {
+        setFloorPlans([...floorPlans, response.data])
+        setNewFloorName('')
+        setIsCreatingFloor(false)
+        setEditingFloorPlan(response.data)
+        setSuccess('Floor plan created! Now add your tables and elements.')
+        setTimeout(() => setSuccess(''), 3000)
+      }
+    } catch (err: any) {
+      setError(err.error || 'Failed to create floor plan')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleSaveFloorPlan = async (elements: FloorPlanElement[], width: number, height: number) => {
+    if (!editingFloorPlan) return
+
+    setError('')
+    setIsSaving(true)
+
+    try {
+      const response = await apiClient.patch(`/restaurants/floor-plans/${editingFloorPlan.id}`, {
+        elements,
+        width,
+        height,
+      }) as any
+      
+      if (response?.success) {
+        setFloorPlans(floorPlans.map(fp => 
+          fp.id === editingFloorPlan.id ? response.data : fp
+        ))
+        setEditingFloorPlan(null)
+        setSuccess('Floor plan saved successfully!')
+        setTimeout(() => setSuccess(''), 3000)
+        fetchFloorPlans() // Refresh to get updated data
+      }
+    } catch (err: any) {
+      setError(err.error || 'Failed to save floor plan')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDeleteFloorPlan = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this floor plan?')) return
+
+    setError('')
+    setIsSaving(true)
+
+    try {
+      const response = await apiClient.delete(`/restaurants/floor-plans/${id}`) as any
+      if (response?.success) {
+        setFloorPlans(floorPlans.filter(fp => fp.id !== id))
+        setSuccess('Floor plan deleted successfully!')
+        setTimeout(() => setSuccess(''), 3000)
+      }
+    } catch (err: any) {
+      setError(err.error || 'Failed to delete floor plan')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <Layout>
@@ -259,7 +381,7 @@ export default function RestaurantConfigPage() {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <Card>
           <div className="flex items-center gap-6">
@@ -278,21 +400,23 @@ export default function RestaurantConfigPage() {
         </Card>
 
         {/* Tab Navigation */}
-        <div className="flex gap-2 border-b border-[var(--glass-border)] pb-2">
+        <div className="flex flex-wrap gap-2 border-b border-[var(--glass-border)] pb-2">
           {[
-            { id: 'general', label: 'General' },
-            { id: 'hours', label: 'Opening Hours' },
-            { id: 'exceptions', label: 'Exceptions' },
+            { id: 'general', label: 'General', icon: '⚙️' },
+            { id: 'hours', label: 'Opening Hours', icon: '🕐' },
+            { id: 'exceptions', label: 'Exceptions', icon: '📅' },
+            { id: 'floorplan', label: 'Floor Plan', icon: '🗺️' },
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                 activeTab === tab.id
                   ? 'bg-[var(--color-primary)] text-[var(--bg-app)]'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
               }`}
             >
+              <span>{tab.icon}</span>
               {tab.label}
             </button>
           ))}
@@ -374,13 +498,40 @@ export default function RestaurantConfigPage() {
                 />
               </div>
 
-              <Input
-                label="Table Layout (comma-separated)"
-                type="text"
-                value={formData.tableLayout}
-                onChange={(e) => setFormData({ ...formData, tableLayout: e.target.value })}
-                placeholder="T1, T2, TB01, TB02"
-              />
+              {/* Table Layout - Read Only (managed via Floor Plan) */}
+              <div className="p-4 bg-[var(--bg-hover)] rounded-lg border border-[var(--glass-border)]">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-[var(--text-primary)]">
+                    Table Layout
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('floorplan')}
+                    className="text-sm text-[var(--color-primary)] hover:underline"
+                  >
+                    Manage in Floor Plan →
+                  </button>
+                </div>
+                {restaurant?.tableLayout && restaurant.tableLayout.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {restaurant.tableLayout.map((tableId: string) => (
+                      <span
+                        key={tableId}
+                        className="px-3 py-1 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-sm font-medium border border-[var(--color-primary)]/20"
+                      >
+                        {tableId}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-[var(--warning)] text-sm flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>No tables configured. Add tables in the Floor Plan to accept reservations.</span>
+                  </div>
+                )}
+              </div>
 
               <Input
                 label="Cuisines (comma-separated)"
@@ -550,6 +701,146 @@ export default function RestaurantConfigPage() {
               </div>
             )}
           </Card>
+        )}
+
+        {/* Floor Plan Tab */}
+        {activeTab === 'floorplan' && (
+          <>
+            {editingFloorPlan ? (
+              /* Floor Plan Editor */
+              <Card>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-[var(--text-primary)]">
+                    Editing: {editingFloorPlan.name}
+                  </h2>
+                </div>
+                <FloorPlanEditor
+                  elements={editingFloorPlan.elements || []}
+                  width={editingFloorPlan.width}
+                  height={editingFloorPlan.height}
+                  onSave={handleSaveFloorPlan}
+                  onCancel={() => setEditingFloorPlan(null)}
+                />
+              </Card>
+            ) : (
+              /* Floor Plan List */
+              <Card>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-[var(--text-primary)]">Floor Plans</h2>
+                    <p className="text-sm text-[var(--text-muted)] mt-1">
+                      Create visual layouts for your restaurant floors. Guests can view these when making reservations.
+                    </p>
+                  </div>
+                  {!isCreatingFloor && (
+                    <Button onClick={() => setIsCreatingFloor(true)}>
+                      + Add Floor
+                    </Button>
+                  )}
+                </div>
+
+                {/* Create New Floor Form */}
+                {isCreatingFloor && (
+                  <div className="p-4 bg-[var(--bg-hover)] rounded-lg mb-6 space-y-4">
+                    <h3 className="font-medium text-[var(--text-primary)]">New Floor Plan</h3>
+                    <Input
+                      label="Floor Name"
+                      type="text"
+                      value={newFloorName}
+                      onChange={(e) => setNewFloorName(e.target.value)}
+                      placeholder="e.g., Ground Floor, Rooftop, Patio"
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={handleCreateFloorPlan} isLoading={isSaving}>
+                        Create Floor
+                      </Button>
+                      <Button variant="outline" onClick={() => {
+                        setIsCreatingFloor(false)
+                        setNewFloorName('')
+                      }}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Floor Plan List */}
+                {floorPlans.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">🗺️</div>
+                    <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
+                      No Floor Plans Yet
+                    </h3>
+                    <p className="text-[var(--text-muted)] max-w-md mx-auto mb-6">
+                      Create a visual floor plan to let guests see and choose their preferred tables when making reservations.
+                    </p>
+                    {!isCreatingFloor && (
+                      <Button onClick={() => setIsCreatingFloor(true)}>
+                        Create Your First Floor Plan
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {floorPlans.map((floorPlan) => (
+                      <div
+                        key={floorPlan.id}
+                        className="border border-[var(--glass-border)] rounded-xl overflow-hidden"
+                      >
+                        <div className="flex items-center justify-between p-4 bg-[var(--bg-hover)]">
+                          <div>
+                            <h3 className="font-semibold text-[var(--text-primary)]">{floorPlan.name}</h3>
+                            <p className="text-sm text-[var(--text-muted)]">
+                              {floorPlan.elements?.filter((e: any) => e.type === 'table').length || 0} tables • 
+                              {floorPlan.width}x{floorPlan.height}px
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => setEditingFloorPlan(floorPlan)}
+                              className="text-sm"
+                            >
+                              Edit
+                            </Button>
+                            <button
+                              onClick={() => handleDeleteFloorPlan(floorPlan.id)}
+                              className="text-[var(--error)] hover:bg-[var(--error)]/20 p-2 rounded-lg"
+                              title="Delete floor plan"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* Floor Plan Preview */}
+                        <div className="p-4">
+                          <FloorPlanViewer
+                            floorPlans={[floorPlan]}
+                            readOnly
+                            compact
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Info Box */}
+                {floorPlans.length > 0 && (
+                  <div className="mt-6 p-4 bg-[var(--info)]/10 border border-[var(--info)]/30 rounded-lg">
+                    <h4 className="font-medium text-[var(--text-primary)] mb-1">💡 Tip</h4>
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      When you add tables in the floor plan editor, they are automatically synced to your table layout.
+                      Guests will be able to view your floor plan and select their preferred table when making a reservation.
+                    </p>
+                  </div>
+                )}
+              </Card>
+            )}
+          </>
         )}
       </div>
     </Layout>

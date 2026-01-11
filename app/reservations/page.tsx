@@ -174,27 +174,42 @@ export default function ReservationsPage() {
             <div className="space-y-3">
               {filteredReservations.map((reservation) => {
                 const isPast = isPastReservation(reservation.timeTo)
+                const hasNoTable = !reservation.tableId
                 
                 return (
                   <div
                     key={reservation.id}
-                    className={`bg-[var(--bg-card)] border border-[var(--glass-border)] rounded-lg p-4 transition-all ${
+                    className={`bg-[var(--bg-card)] border rounded-lg p-4 transition-all ${
+                      hasNoTable && !isPast 
+                        ? 'border-[var(--warning)]/50 bg-[var(--warning)]/5' 
+                        : 'border-[var(--glass-border)]'
+                    } ${
                       isPast ? 'opacity-70' : 'hover:border-[var(--color-primary)]/50 hover:shadow-md'
                     }`}
                   >
                     <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <h3 className="text-lg font-semibold text-[var(--text-primary)]">
                             {reservation.guestName}
                           </h3>
                           {getStatusBadge(reservation)}
+                          {hasNoTable && !isPast && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--warning)]/20 text-[var(--warning)] border border-[var(--warning)]/30">
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                              </svg>
+                              No table assigned
+                            </span>
+                          )}
                         </div>
                         <p className="text-[var(--text-secondary)] text-sm">
                           {reservation.guestContact}
                         </p>
                         <p className="text-[var(--text-secondary)] text-sm">
-                          {reservation.numberOfPeople} people • Table: {reservation.tableId || 'TBD'}
+                          {reservation.numberOfPeople} people • Table: {reservation.tableId || (
+                            <span className="text-[var(--warning)]">TBD</span>
+                          )}
                         </p>
                         <p className="text-[var(--text-muted)] text-sm mt-1">
                           {format(new Date(reservation.timeFrom), 'EEEE, MMM dd, yyyy')}
@@ -205,8 +220,8 @@ export default function ReservationsPage() {
                       <div className="flex gap-2">
                         {!isPast && (
                           <Link href={`/reservations/${reservation.id}/edit`}>
-                            <Button variant="outline" className="text-sm">
-                              Edit
+                            <Button variant={hasNoTable ? 'primary' : 'outline'} className="text-sm">
+                              {hasNoTable ? 'Assign Table' : 'Edit'}
                             </Button>
                           </Link>
                         )}

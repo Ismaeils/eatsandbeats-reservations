@@ -35,6 +35,7 @@ model Restaurant {
   slotGranularity    Int      @default(15) // time slot granularity in minutes
   tableLayout        String[] // Array of table identifiers like ["T1", "T2", "TB01"]
   cuisines           String[] // Array of cuisine types
+  hasVisualLayout    Boolean  @default(false) // Whether restaurant uses visual floor plan
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   
@@ -43,8 +44,27 @@ model Restaurant {
   invitations        ReservationInvitation[]
   openingHours       OpeningHours[]
   exceptionalDates   ExceptionalDate[]
+  floorPlans         FloorPlan[]
   
   @@map("restaurants")
+}
+
+// Visual floor plan for restaurant layout
+model FloorPlan {
+  id           String   @id @default(cuid())
+  restaurantId String
+  name         String   // e.g., "Ground Floor", "Rooftop", "Patio"
+  order        Int      @default(0) // Display order for multiple floors
+  width        Int      @default(800) // Canvas width in pixels
+  height       Int      @default(600) // Canvas height in pixels
+  elements     Json     // JSON array of floor plan elements (tables, dividers, decorations)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  @@map("floor_plans")
 }
 
 // Regular opening hours for each day of the week
