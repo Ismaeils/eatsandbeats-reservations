@@ -6,6 +6,7 @@ import apiClient from '@/lib/api-client'
 import Button from '@/components/Button'
 import Input from '@/components/Input'
 import Card from '@/components/Card'
+import Logo from '@/components/Logo'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -31,49 +32,55 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Forgot Password</h1>
-          <p className="text-white/80">
-            Enter your email to receive a password reset link
-          </p>
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
+          <Logo size="lg" />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg">
-              {error}
-            </div>
-          )}
+        <Card>
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Forgot Password</h1>
+            <p className="text-[var(--text-secondary)]">
+              Enter your email to receive a password reset link
+            </p>
+          </div>
 
-          {message && (
-            <div className="bg-green-500/20 border border-green-500/50 text-green-200 px-4 py-3 rounded-lg">
-              {message}
-            </div>
-          )}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="bg-[var(--error)]/20 border border-[var(--error)]/50 text-[var(--error)] px-4 py-3 rounded-lg">
+                {error}
+              </div>
+            )}
 
-          <Input
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            placeholder="your@email.com"
-          />
+            {message && (
+              <div className="bg-[var(--success)]/20 border border-[var(--success)]/50 text-[var(--success)] px-4 py-3 rounded-lg">
+                {message}
+              </div>
+            )}
 
-          <Button type="submit" isLoading={isLoading} className="w-full">
-            Send Reset Link
-          </Button>
+            <Input
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="your@email.com"
+            />
 
-          <p className="text-center text-white/80 text-sm">
-            Remember your password?{' '}
-            <Link href="/login" className="text-white font-medium hover:underline">
-              Sign in
-            </Link>
-          </p>
-        </form>
-      </Card>
+            <Button type="submit" isLoading={isLoading} className="w-full">
+              Send Reset Link
+            </Button>
+
+            <p className="text-center text-[var(--text-secondary)] text-sm">
+              Remember your password?{' '}
+              <Link href="/login" className="text-[var(--color-primary)] font-medium hover:text-[var(--color-primary-hover)] transition-colors">
+                Sign in
+              </Link>
+            </p>
+          </form>
+        </Card>
+      </div>
     </div>
   )
 }
-

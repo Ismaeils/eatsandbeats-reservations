@@ -2,10 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { addMinutes, format } from 'date-fns'
 import apiClient from '@/lib/api-client'
 import Button from '@/components/Button'
 import Input from '@/components/Input'
 import Card from '@/components/Card'
+import Logo from '@/components/Logo'
+import RestaurantLogo from '@/components/RestaurantLogo'
+import TimeSlotPicker from '@/components/TimeSlotPicker'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 
 export default function ReservationFormPage() {
   const params = useParams()
@@ -13,12 +18,13 @@ export default function ReservationFormPage() {
   const token = params.token as string
 
   const [restaurant, setRestaurant] = useState<any>(null)
+  const [availability, setAvailability] = useState<any>(null)
   const [formData, setFormData] = useState({
     guestName: '',
     guestContact: '',
-    numberOfPeople: '1',
-    timeFrom: '',
-    timeTo: '',
+    numberOfPeople: '2',
+    selectedDate: null as Date | null,
+    selectedTime: null as string | null,
     tableId: '',
   })
   const [isLoading, setIsLoading] = useState(true)
@@ -27,23 +33,29 @@ export default function ReservationFormPage() {
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    // Note: In a real implementation, you'd fetch invitation details
-    // For now, we'll just show the form
-    setIsLoading(false)
+    fetchAvailability()
   }, [token])
 
-  const calculateEndTime = (startTime: string, minutes: number) => {
-    if (!startTime) return ''
-    const start = new Date(startTime)
-    const end = new Date(start.getTime() + minutes * 60000)
-    return end.toISOString().slice(0, 16)
-  }
-
-  const handleTimeFromChange = (value: string) => {
-    setFormData({ ...formData, timeFrom: value })
-    if (restaurant && restaurant.averageSeatingTime) {
-      const endTime = calculateEndTime(value, restaurant.averageSeatingTime)
-      setFormData((prev) => ({ ...prev, timeTo: endTime }))
+  const fetchAvailability = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch(`/api/public/availability?token=${token}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        setAvailability(data.data)
+        setRestaurant({
+          name: data.data.restaurantName,
+          logoUrl: data.data.logoUrl,
+          tableLayout: data.data.tableLayout,
+        })
+      } else {
+        setError(data.error || 'Failed to load reservation form')
+      }
+    } catch (err) {
+      setError('Failed to load reservation form')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -54,29 +66,27 @@ export default function ReservationFormPage() {
 
     try {
       // Validate required fields
-      if (!formData.guestName || !formData.guestContact || !formData.timeFrom || !formData.timeTo) {
+      if (!formData.guestName || !formData.guestContact || !formData.selectedDate || !formData.selectedTime) {
         setError('Please fill in all required fields')
         setIsSubmitting(false)
         return
       }
 
-      // Convert datetime-local to ISO string
-      const timeFromDate = new Date(formData.timeFrom)
-      const timeToDate = new Date(formData.timeTo)
-
-      if (isNaN(timeFromDate.getTime()) || isNaN(timeToDate.getTime())) {
-        setError('Invalid date format. Please select valid dates.')
-        setIsSubmitting(false)
-        return
-      }
+      // Calculate timeFrom and timeTo
+      const [hours, minutes] = formData.selectedTime.split(':').map(Number)
+      const timeFrom = new Date(formData.selectedDate)
+      timeFrom.setHours(hours, minutes, 0, 0)
+      
+      const duration = availability?.reservationDuration || 120
+      const timeTo = addMinutes(timeFrom, duration)
 
       const payload = {
         invitationToken: token,
         guestName: formData.guestName.trim(),
         guestContact: formData.guestContact.trim(),
         numberOfPeople: parseInt(formData.numberOfPeople),
-        timeFrom: timeFromDate.toISOString(),
-        timeTo: timeToDate.toISOString(),
+        timeFrom: timeFrom.toISOString(),
+        timeTo: timeTo.toISOString(),
         tableId: formData.tableId || undefined,
       }
 
@@ -86,7 +96,6 @@ export default function ReservationFormPage() {
       console.log('Reservation response:', response)
       if (response?.success) {
         setSuccess(true)
-        // In a real implementation, redirect to payment page if deposit required
         setTimeout(() => {
           router.push('/reservation-success')
         }, 3000)
@@ -104,148 +113,237 @@ export default function ReservationFormPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
+      <ThemeProvider>
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="text-[var(--text-secondary)] text-xl">Loading...</div>
+        </div>
+      </ThemeProvider>
+    )
+  }
+
+  if (error && !availability) {
+    return (
+      <ThemeProvider>
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <div className="text-center">
+              <div className="mb-6">
+                <svg
+                  className="mx-auto h-16 w-16 text-[var(--error)]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-4">
+                Unable to Load Form
+              </h1>
+              <p className="text-[var(--text-secondary)]">{error}</p>
+            </div>
+          </Card>
+        </div>
+      </ThemeProvider>
     )
   }
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <div className="text-center">
-            <div className="mb-6">
-              <svg
-                className="mx-auto h-16 w-16 text-green-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+      <ThemeProvider>
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            {/* Logos */}
+            <div className="flex justify-center items-center gap-4 mb-8">
+              <Logo size="md" />
+              {restaurant && (
+                <>
+                  <div className="h-12 w-px bg-[var(--glass-border)]" />
+                  <RestaurantLogo 
+                    logoUrl={restaurant.logoUrl} 
+                    restaurantName={restaurant.name}
+                    size="md"
+                  />
+                </>
+              )}
             </div>
-            <h1 className="text-3xl font-bold text-white mb-4">
-              Reservation Created!
-            </h1>
-            <p className="text-white/80">
-              Your reservation has been submitted successfully.
-            </p>
+            <Card>
+              <div className="text-center">
+                <div className="mb-6">
+                  <svg
+                    className="mx-auto h-16 w-16 text-[var(--success)]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-4">
+                  Reservation Created!
+                </h1>
+                <p className="text-[var(--text-secondary)]">
+                  Your reservation has been submitted successfully.
+                </p>
+              </div>
+            </Card>
           </div>
-        </Card>
-      </div>
+        </div>
+      </ThemeProvider>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 py-12">
-      <Card className="w-full max-w-2xl">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Make a Reservation
-          </h1>
-          <p className="text-white/80">
-            Please fill in the details below to complete your reservation
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg">
-              {error}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Your Name"
-              type="text"
-              value={formData.guestName}
-              onChange={(e) =>
-                setFormData({ ...formData, guestName: e.target.value })
-              }
-              required
-              placeholder="John Doe"
-            />
-
-            <Input
-              label="Contact (Phone or Email)"
-              type="text"
-              value={formData.guestContact}
-              onChange={(e) =>
-                setFormData({ ...formData, guestContact: e.target.value })
-              }
-              required
-              placeholder="+1234567890 or email@example.com"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Number of People"
-              type="number"
-              min="1"
-              value={formData.numberOfPeople}
-              onChange={(e) =>
-                setFormData({ ...formData, numberOfPeople: e.target.value })
-              }
-              required
-            />
-
-            {restaurant && restaurant.tableLayout.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-white/90 mb-2">
-                  Preferred Table
-                </label>
-                <select
-                  className="w-full px-4 py-3 rounded-lg glass border border-white/20 text-white bg-transparent focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
-                  value={formData.tableId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, tableId: e.target.value })
-                  }
-                >
-                  <option value="">No preference</option>
-                  {restaurant.tableLayout.map((tableId: string) => (
-                    <option key={tableId} value={tableId} className="bg-gray-800">
-                      {tableId}
-                    </option>
-                  ))}
-                </select>
-              </div>
+    <ThemeProvider>
+      <div className="min-h-screen flex items-center justify-center p-4 py-12">
+        <div className="w-full max-w-2xl">
+          {/* Logos */}
+          <div className="flex justify-center items-center gap-4 mb-8">
+            <Logo size="lg" />
+            {restaurant && (
+              <>
+                <div className="h-16 w-px bg-[var(--glass-border)]" />
+                <RestaurantLogo 
+                  logoUrl={restaurant.logoUrl} 
+                  restaurantName={restaurant.name}
+                  size="lg"
+                />
+              </>
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Reservation Date & Time"
-              type="datetime-local"
-              value={formData.timeFrom}
-              onChange={(e) => handleTimeFromChange(e.target.value)}
-              required
-            />
+          <Card>
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">
+                Make a Reservation
+              </h1>
+              <p className="text-[var(--text-secondary)]">
+                {restaurant ? `at ${restaurant.name}` : 'Please fill in the details below'}
+              </p>
+            </div>
 
-            <Input
-              label="End Time"
-              type="datetime-local"
-              value={formData.timeTo}
-              onChange={(e) =>
-                setFormData({ ...formData, timeTo: e.target.value })
-              }
-              required
-            />
-          </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {error && (
+                <div className="bg-[var(--error)]/20 border border-[var(--error)]/50 text-[var(--error)] px-4 py-3 rounded-lg">
+                  {error}
+                </div>
+              )}
 
-          <Button type="submit" isLoading={isSubmitting} className="w-full">
-            Submit Reservation
-          </Button>
-        </form>
-      </Card>
-    </div>
+              {/* Guest Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  label="Your Name"
+                  type="text"
+                  value={formData.guestName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, guestName: e.target.value })
+                  }
+                  required
+                  placeholder="John Doe"
+                />
+
+                <Input
+                  label="Contact (Phone or Email)"
+                  type="text"
+                  value={formData.guestContact}
+                  onChange={(e) =>
+                    setFormData({ ...formData, guestContact: e.target.value })
+                  }
+                  required
+                  placeholder="+1234567890 or email@example.com"
+                />
+              </div>
+
+              {/* Party Size */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  label="Number of People"
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={formData.numberOfPeople}
+                  onChange={(e) =>
+                    setFormData({ ...formData, numberOfPeople: e.target.value })
+                  }
+                  required
+                />
+
+                {restaurant?.tableLayout && restaurant.tableLayout.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                      Preferred Table (Optional)
+                    </label>
+                    <select
+                      className="w-full px-4 py-3 rounded-lg bg-[var(--bg-card)] border border-[var(--glass-border)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] shadow-sm"
+                      value={formData.tableId}
+                      onChange={(e) =>
+                        setFormData({ ...formData, tableId: e.target.value })
+                      }
+                    >
+                      <option value="">No preference</option>
+                      {restaurant.tableLayout.map((tableId: string) => (
+                        <option key={tableId} value={tableId}>
+                          {tableId}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {/* Date & Time Selection */}
+              <TimeSlotPicker
+                selectedDate={formData.selectedDate}
+                selectedTime={formData.selectedTime}
+                onDateChange={(date) => setFormData({ ...formData, selectedDate: date, selectedTime: null })}
+                onTimeChange={(time) => setFormData({ ...formData, selectedTime: time })}
+                openingHours={availability?.openingHours || []}
+                exceptionalDates={availability?.exceptionalDates || []}
+                reservationDuration={availability?.reservationDuration || 120}
+                slotGranularity={availability?.slotGranularity || 15}
+              />
+
+              {/* Summary */}
+              {formData.selectedDate && formData.selectedTime && (
+                <div className="bg-[var(--bg-hover)] rounded-lg p-4 border border-[var(--glass-border)]">
+                  <h3 className="text-sm font-medium text-[var(--text-secondary)] mb-2">Reservation Summary</h3>
+                  <p className="text-[var(--text-primary)]">
+                    {format(formData.selectedDate, 'EEEE, MMMM d, yyyy')}
+                  </p>
+                  <p className="text-[var(--color-primary)] font-medium">
+                    {(() => {
+                      const [h, m] = formData.selectedTime.split(':').map(Number)
+                      const start = new Date()
+                      start.setHours(h, m)
+                      const end = addMinutes(start, availability?.reservationDuration || 120)
+                      return `${format(start, 'h:mm a')} - ${format(end, 'h:mm a')}`
+                    })()}
+                  </p>
+                </div>
+              )}
+
+              <Button 
+                type="submit" 
+                isLoading={isSubmitting} 
+                className="w-full"
+                disabled={!formData.selectedDate || !formData.selectedTime}
+              >
+                Submit Reservation
+              </Button>
+            </form>
+          </Card>
+        </div>
+      </div>
+    </ThemeProvider>
   )
 }
-

@@ -14,18 +14,17 @@ export default function Input({
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-white/90 mb-2">
+        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
           {label}
         </label>
       )}
       <input
-        className={`w-full px-4 py-3 rounded-lg glass border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all ${className}`}
+        className={`w-full px-4 py-3 rounded-lg bg-[var(--bg-card)] border border-[var(--glass-border)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] transition-all shadow-sm ${className}`}
         {...props}
       />
       {error && (
-        <p className="mt-1 text-sm text-red-300">{error}</p>
+        <p className="mt-1 text-sm text-[var(--error)]">{error}</p>
       )}
     </div>
   )
 }
-

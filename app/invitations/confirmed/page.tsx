@@ -16,7 +16,7 @@ export default function InvitationConfirmedPage() {
           <div className="text-center">
             <div className="mb-6">
               <svg
-                className="mx-auto h-16 w-16 text-green-400"
+                className="mx-auto h-16 w-16 text-[var(--success)]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -29,10 +29,10 @@ export default function InvitationConfirmedPage() {
                 />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-white mb-4">
+            <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-4">
               Invitation Sent Successfully!
             </h1>
-            <p className="text-white/80 mb-8">
+            <p className="text-[var(--text-secondary)] mb-8">
               The reservation invitation has been sent. The guest will receive a message
               with instructions to complete their reservation.
             </p>
@@ -53,4 +53,3 @@ export default function InvitationConfirmedPage() {
     </Layout>
   )
 }
-

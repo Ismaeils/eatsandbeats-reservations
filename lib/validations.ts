@@ -39,6 +39,8 @@ export const updateRestaurantConfigSchema = z.object({
   logoUrl: z.string().url().optional().nullable(),
   reservationDeposit: z.number().min(0).optional(),
   averageSeatingTime: z.number().int().min(15).max(300).optional(),
+  reservationDuration: z.number().int().min(30).max(480).optional(),
+  slotGranularity: z.number().int().min(5).max(60).optional(),
   tableLayout: z.array(z.string().min(1)).optional(),
   cuisines: z.array(z.string()).optional(),
 })
