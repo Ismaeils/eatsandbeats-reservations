@@ -83,7 +83,7 @@ export default function EditReservationPage() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-white text-xl">Loading...</div>
+          <div className="text-[var(--text-secondary)] text-xl">Loading...</div>
         </div>
       </Layout>
     )
@@ -93,7 +93,7 @@ export default function EditReservationPage() {
     return (
       <Layout>
         <Card>
-          <p className="text-white">Reservation not found</p>
+          <p className="text-[var(--text-primary)]">Reservation not found</p>
         </Card>
       </Layout>
     )
@@ -103,23 +103,23 @@ export default function EditReservationPage() {
     <Layout>
       <div className="max-w-2xl mx-auto">
         <Card>
-          <h1 className="text-3xl font-bold text-white mb-6">Edit Reservation</h1>
+          <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-6">Edit Reservation</h1>
 
           {error && (
-            <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg mb-6">
+            <div className="bg-[var(--error)]/20 border border-[var(--error)]/50 text-[var(--error)] px-4 py-3 rounded-lg mb-6">
               {error}
             </div>
           )}
 
           <div className="mb-6 space-y-2">
-            <p className="text-white/80">
-              <span className="font-semibold">Guest:</span> {reservation.guestName}
+            <p className="text-[var(--text-secondary)]">
+              <span className="font-semibold text-[var(--text-primary)]">Guest:</span> {reservation.guestName}
             </p>
-            <p className="text-white/80">
-              <span className="font-semibold">Contact:</span> {reservation.guestContact}
+            <p className="text-[var(--text-secondary)]">
+              <span className="font-semibold text-[var(--text-primary)]">Contact:</span> {reservation.guestContact}
             </p>
-            <p className="text-white/80">
-              <span className="font-semibold">Party Size:</span> {reservation.numberOfPeople}
+            <p className="text-[var(--text-secondary)]">
+              <span className="font-semibold text-[var(--text-primary)]">Party Size:</span> {reservation.numberOfPeople}
             </p>
           </div>
 
@@ -144,17 +144,17 @@ export default function EditReservationPage() {
 
             {restaurant && (
               <div>
-                <label className="block text-sm font-medium text-white/90 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Table
                 </label>
                 <select
-                  className="w-full px-4 py-3 rounded-lg glass border border-white/20 text-white bg-transparent focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
+                  className="w-full px-4 py-3 rounded-lg bg-[var(--bg-card)] border border-[var(--glass-border)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] shadow-sm"
                   value={formData.tableId}
                   onChange={(e) => setFormData({ ...formData, tableId: e.target.value })}
                 >
                   <option value="">Select a table</option>
                   {restaurant.tableLayout.map((tableId: string) => (
-                    <option key={tableId} value={tableId} className="bg-gray-800">
+                    <option key={tableId} value={tableId}>
                       {tableId}
                     </option>
                   ))}
@@ -181,4 +181,3 @@ export default function EditReservationPage() {
     </Layout>
   )
 }
-

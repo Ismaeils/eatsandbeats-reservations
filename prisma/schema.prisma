@@ -24,23 +24,62 @@ model RestaurantUser {
 }
 
 model Restaurant {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  name              String
-  logoUrl           String?
-  address           String
-  reservationDeposit Float   @default(0)
-  averageSeatingTime Int    @default(60) // in minutes
-  tableLayout       String[] // Array of table identifiers like ["T1", "T2", "TB01"]
-  cuisines          String[] // Array of cuisine types
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  name               String
+  logoUrl            String?
+  address            String
+  reservationDeposit Float    @default(0)
+  averageSeatingTime Int      @default(60) // in minutes
+  reservationDuration Int     @default(120) // default reservation duration in minutes
+  slotGranularity    Int      @default(15) // time slot granularity in minutes
+  tableLayout        String[] // Array of table identifiers like ["T1", "T2", "TB01"]
+  cuisines           String[] // Array of cuisine types
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
   
-  user              RestaurantUser @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reservations      Reservation[]
-  invitations       ReservationInvitation[]
+  user               RestaurantUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reservations       Reservation[]
+  invitations        ReservationInvitation[]
+  openingHours       OpeningHours[]
+  exceptionalDates   ExceptionalDate[]
   
   @@map("restaurants")
+}
+
+// Regular opening hours for each day of the week
+model OpeningHours {
+  id           String   @id @default(cuid())
+  restaurantId String
+  dayOfWeek    Int      // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  isOpen       Boolean  @default(true)
+  openTime     String?  // Format: "HH:mm" e.g., "09:00"
+  closeTime    String?  // Format: "HH:mm" e.g., "22:00"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  @@unique([restaurantId, dayOfWeek])
+  @@map("opening_hours")
+}
+
+// Exceptional dates (holidays, special events, etc.)
+model ExceptionalDate {
+  id           String   @id @default(cuid())
+  restaurantId String
+  date         DateTime @db.Date // The specific date
+  isOpen       Boolean  @default(false) // Whether open on this date
+  openTime     String?  // Format: "HH:mm" - overrides regular hours
+  closeTime    String?  // Format: "HH:mm" - overrides regular hours
+  note         String?  // Optional note (e.g., "Christmas Day")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  @@unique([restaurantId, date])
+  @@map("exceptional_dates")
 }
 
 model ReservationInvitation {
@@ -104,4 +143,3 @@ enum ReservationStatus {
   COMPLETED
   CANCELLED
 }
-

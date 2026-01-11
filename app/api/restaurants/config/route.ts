@@ -33,6 +33,12 @@ export async function PATCH(request: NextRequest) {
         ...(validatedData.averageSeatingTime !== undefined && {
           averageSeatingTime: validatedData.averageSeatingTime,
         }),
+        ...(validatedData.reservationDuration !== undefined && {
+          reservationDuration: validatedData.reservationDuration,
+        }),
+        ...(validatedData.slotGranularity !== undefined && {
+          slotGranularity: validatedData.slotGranularity,
+        }),
         ...(validatedData.tableLayout !== undefined && {
           tableLayout: validatedData.tableLayout,
         }),

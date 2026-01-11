@@ -36,7 +36,7 @@ export default function SendInvitationPage() {
     } finally {
       setIsLoading(false)
     }
-    }
+  }
 
   if (success) {
     return (
@@ -46,7 +46,7 @@ export default function SendInvitationPage() {
             <div className="text-center">
               <div className="mb-6">
                 <svg
-                  className="mx-auto h-16 w-16 text-green-400"
+                  className="mx-auto h-16 w-16 text-[var(--success)]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -59,19 +59,19 @@ export default function SendInvitationPage() {
                   />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold text-white mb-4">
+              <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-4">
                 Invitation Sent!
               </h1>
-              <p className="text-white/80 mb-6">
+              <p className="text-[var(--text-secondary)] mb-6">
                 The reservation invitation has been sent to {phoneNumber}
               </p>
               {invitationData?.webFormUrl && (
-                <div className="bg-white/10 rounded-lg p-4 mb-6">
-                  <p className="text-white/80 text-sm mb-2">Web Form URL:</p>
-                  <p className="text-white text-sm break-all">{invitationData.webFormUrl}</p>
+                <div className="bg-[var(--bg-hover)] rounded-lg p-4 mb-6 border border-[var(--glass-border)]">
+                  <p className="text-[var(--text-muted)] text-sm mb-2">Web Form URL:</p>
+                  <p className="text-[var(--color-primary)] text-sm break-all font-medium">{invitationData.webFormUrl}</p>
                 </div>
               )}
-              <p className="text-white/60 text-sm">
+              <p className="text-[var(--text-muted)] text-sm">
                 Redirecting to dashboard...
               </p>
             </div>
@@ -86,17 +86,17 @@ export default function SendInvitationPage() {
       <div className="max-w-2xl mx-auto">
         <Card>
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">
+            <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">
               Send Reservation Invitation
             </h1>
-            <p className="text-white/80">
+            <p className="text-[var(--text-secondary)]">
               Enter the guest&apos;s phone number to send them a reservation invitation
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg">
+              <div className="bg-[var(--error)]/20 border border-[var(--error)]/50 text-[var(--error)] px-4 py-3 rounded-lg">
                 {error}
               </div>
             )}
@@ -129,4 +129,3 @@ export default function SendInvitationPage() {
     </Layout>
   )
 }
-

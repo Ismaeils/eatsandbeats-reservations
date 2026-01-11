@@ -8,30 +8,34 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-body)', 'system-ui', 'sans-serif'],
+        heading: ['var(--font-heading)', 'serif'],
+      },
       colors: {
-        primary: {
-          50: 'var(--color-primary-50)',
-          100: 'var(--color-primary-100)',
-          200: 'var(--color-primary-200)',
-          300: 'var(--color-primary-300)',
-          400: 'var(--color-primary-400)',
-          500: 'var(--color-primary-500)',
-          600: 'var(--color-primary-600)',
-          700: 'var(--color-primary-700)',
-          800: 'var(--color-primary-800)',
-          900: 'var(--color-primary-900)',
+        brand: {
+          dark: '#1f1f1d',
+          primary: '#706459',
+          secondary: '#958d84',
+          accent: '#b2a798',
+          light: '#e0e1dd',
         },
-        secondary: {
-          50: 'var(--color-secondary-50)',
-          100: 'var(--color-secondary-100)',
-          200: 'var(--color-secondary-200)',
-          300: 'var(--color-secondary-300)',
-          400: 'var(--color-secondary-400)',
-          500: 'var(--color-secondary-500)',
-          600: 'var(--color-secondary-600)',
-          700: 'var(--color-secondary-700)',
-          800: 'var(--color-secondary-800)',
-          900: 'var(--color-secondary-900)',
+        surface: {
+          app: '#e0e1dd',
+          nav: '#1f1f1d',
+          card: '#ffffff',
+          hover: '#f5f5f3',
+        },
+        content: {
+          primary: '#1f1f1d',
+          secondary: '#706459',
+          muted: '#958d84',
+        },
+        state: {
+          success: '#5a8a5a',
+          warning: '#b8963d',
+          error: '#a34a3a',
+          info: '#6a7d91',
         },
       },
       backdropBlur: {
@@ -42,4 +46,3 @@ const config: Config = {
   plugins: [],
 }
 export default config
-

@@ -18,11 +18,11 @@ export default function Button({
   
   const variantClasses = {
     primary:
-      'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm border border-white/30',
+      'bg-[var(--color-primary)] text-[var(--bg-app)] hover:bg-[var(--color-primary-hover)] border border-[var(--color-primary)] shadow-sm',
     secondary:
-      'bg-primary-600 text-white hover:bg-primary-700',
+      'bg-[var(--color-accent)] text-[var(--text-primary)] hover:bg-[var(--color-secondary)] border border-[var(--color-accent)]',
     outline:
-      'bg-transparent text-white border-2 border-white/50 hover:bg-white/10',
+      'bg-transparent text-[var(--color-primary)] border-2 border-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-[var(--bg-app)]',
   }
 
   return (
@@ -34,7 +34,7 @@ export default function Button({
       {isLoading ? (
         <span className="flex items-center justify-center">
           <svg
-            className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+            className="animate-spin -ml-1 mr-3 h-5 w-5 text-current"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -61,4 +61,3 @@ export default function Button({
     </button>
   )
 }
-

@@ -1,8 +1,19 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Cormorant_Garamond, Nunito_Sans } from 'next/font/google'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const cormorant = Cormorant_Garamond({ 
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-heading',
+})
+
+const nunito = Nunito_Sans({ 
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-body',
+})
 
 export const metadata: Metadata = {
   title: 'Eats & Beats Reservations',
@@ -15,9 +26,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${cormorant.variable} ${nunito.variable} font-sans`}>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   )
 }
-
