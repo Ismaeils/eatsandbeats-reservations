@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { useRouter, useParams } from 'next/navigation'
-import apiClient from '@/lib/api-client'
 import Button from '@/components/Button'
-import Input from '@/components/Input'
 import Card from '@/components/Card'
+import Input from '@/components/Input'
 import Layout from '@/components/Layout'
+import apiClient from '@/lib/api-client'
 import { format } from 'date-fns'
+import { useParams, useRouter } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
 
 export default function EditReservationPage() {
   const router = useRouter()
@@ -150,7 +150,7 @@ export default function EditReservationPage() {
     )
   }
 
-  const currentTableIsOccupied = formData.tableId && occupiedTables.includes(formData.tableId)
+  const currentTableIsOccupied = Boolean(formData.tableId && occupiedTables.includes(formData.tableId))
 
   return (
     <Layout>
