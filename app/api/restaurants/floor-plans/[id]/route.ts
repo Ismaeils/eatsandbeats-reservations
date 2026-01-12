@@ -1,7 +1,7 @@
-import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { errorResponse, successResponse, unauthorizedResponse } from '@/lib/api-response'
 import { getCurrentUser } from '@/lib/auth'
-import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/api-response'
+import { prisma } from '@/lib/prisma'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
 const updateFloorPlanSchema = z.object({
@@ -57,7 +57,8 @@ async function migrateReservationsFromDeletedTables(
 
   if (ongoingReservations.length > 0) {
     // Return the table IDs that have ongoing reservations - can't delete these
-    const blockedTableIds = [...new Set(ongoingReservations.map(r => r.tableId).filter(Boolean))] as string[]
+    const tableIds = ongoingReservations.map(r => r.tableId).filter((id): id is string => id !== null)
+    const blockedTableIds = Array.from(new Set(tableIds))
     return { migrated: 0, blockedByOngoing: blockedTableIds }
   }
 
@@ -195,7 +196,7 @@ export async function PATCH(
       if (deletedTableIds.length > 0) {
         // Get all table IDs from other floor plans
         const otherFloorPlanTableIds = await getAllTableIds(restaurant.id, id)
-        const allAvailableTableIds = [...new Set([...newTableIds, ...otherFloorPlanTableIds])]
+        const allAvailableTableIds = Array.from(new Set([...newTableIds, ...otherFloorPlanTableIds]))
 
         // Check for ongoing reservations and migrate future ones
         const { blockedByOngoing } = await migrateReservationsFromDeletedTables(
@@ -240,7 +241,7 @@ export async function PATCH(
       await prisma.restaurant.update({
         where: { id: restaurant.id },
         data: { 
-          tableLayout: [...new Set(allTableIds)],
+          tableLayout: Array.from(new Set(allTableIds)),
           hasVisualLayout: allTableIds.length > 0,
         },
       })
@@ -331,7 +332,7 @@ export async function DELETE(
     await prisma.restaurant.update({
       where: { id: restaurant.id },
       data: { 
-        tableLayout: [...new Set(allTableIds)],
+        tableLayout: Array.from(new Set(allTableIds)),
         hasVisualLayout: allTableIds.length > 0,
       },
     })
