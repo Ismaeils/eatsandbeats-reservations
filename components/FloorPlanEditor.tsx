@@ -35,7 +35,6 @@ export default function FloorPlanEditor({
   const [canvasHeight, setCanvasHeight] = useState(initialHeight)
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
-  const [zoom, setZoom] = useState(1)
   const [showGrid, setShowGrid] = useState(true)
   const canvasRef = useRef<HTMLDivElement>(null)
 
@@ -60,20 +59,20 @@ export default function FloorPlanEditor({
   }
 
   // Update element
-  const updateElement = (id: string, updates: Partial<FloorPlanElement>) => {
-    setElements(elements.map(el => 
+  const updateElement = useCallback((id: string, updates: Partial<FloorPlanElement>) => {
+    setElements(prev => prev.map(el => 
       el.id === id ? { ...el, ...updates } : el
     ))
-  }
+  }, [])
 
   // Delete element
-  const deleteElement = (id: string) => {
-    setElements(elements.filter(el => el.id !== id))
+  const deleteElement = useCallback((id: string) => {
+    setElements(prev => prev.filter(el => el.id !== id))
     if (selectedId === id) setSelectedId(null)
-  }
+  }, [selectedId])
 
   // Duplicate element
-  const duplicateElement = (id: string) => {
+  const duplicateElement = useCallback((id: string) => {
     const element = elements.find(el => el.id === id)
     if (!element) return
     
@@ -88,55 +87,106 @@ export default function FloorPlanEditor({
     }
     setElements([...elements, newElement])
     setSelectedId(newElement.id)
-  }
+  }, [elements])
 
-  // Handle mouse down on element
-  const handleMouseDown = (e: React.MouseEvent, elementId: string) => {
+  // Get position from event (mouse or touch)
+  const getEventPosition = useCallback((e: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent) => {
+    const rect = canvasRef.current?.getBoundingClientRect()
+    if (!rect) return { x: 0, y: 0 }
+
+    let clientX: number, clientY: number
+    if ('touches' in e) {
+      clientX = e.touches[0]?.clientX || e.changedTouches[0]?.clientX || 0
+      clientY = e.touches[0]?.clientY || e.changedTouches[0]?.clientY || 0
+    } else {
+      clientX = e.clientX
+      clientY = e.clientY
+    }
+
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    }
+  }, [])
+
+  // Handle element selection and drag start
+  const handlePointerDown = useCallback((e: React.MouseEvent | React.TouchEvent, elementId: string) => {
     e.stopPropagation()
+    e.preventDefault()
+    
     const element = elements.find(el => el.id === elementId)
     if (!element) return
 
     setSelectedId(elementId)
     setIsDragging(true)
     
-    const rect = canvasRef.current?.getBoundingClientRect()
-    if (rect) {
-      setDragOffset({
-        x: (e.clientX - rect.left) / zoom - element.x,
-        y: (e.clientY - rect.top) / zoom - element.y,
-      })
-    }
-  }
+    const pos = getEventPosition(e)
+    setDragOffset({
+      x: pos.x - element.x,
+      y: pos.y - element.y,
+    })
+  }, [elements, getEventPosition])
 
-  // Handle mouse move
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging || !selectedId || !canvasRef.current) return
+  // Handle pointer move
+  const handlePointerMove = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!isDragging || !selectedId) return
 
-    const rect = canvasRef.current.getBoundingClientRect()
-    const x = Math.max(0, Math.min((e.clientX - rect.left) / zoom - dragOffset.x, canvasWidth - (selectedElement?.width || 0)))
-    const y = Math.max(0, Math.min((e.clientY - rect.top) / zoom - dragOffset.y, canvasHeight - (selectedElement?.height || 0)))
+    const pos = getEventPosition(e)
+    const element = elements.find(el => el.id === selectedId)
+    if (!element) return
+
+    let x = pos.x - dragOffset.x
+    let y = pos.y - dragOffset.y
+
+    // Constrain to canvas
+    x = Math.max(0, Math.min(x, canvasWidth - element.width))
+    y = Math.max(0, Math.min(y, canvasHeight - element.height))
 
     // Snap to grid (10px)
-    const snapX = showGrid ? Math.round(x / 10) * 10 : x
-    const snapY = showGrid ? Math.round(y / 10) * 10 : y
+    if (showGrid) {
+      x = Math.round(x / 10) * 10
+      y = Math.round(y / 10) * 10
+    }
 
-    updateElement(selectedId, { x: snapX, y: snapY })
-  }, [isDragging, selectedId, dragOffset, zoom, canvasWidth, canvasHeight, selectedElement, showGrid])
+    updateElement(selectedId, { x, y })
+  }, [isDragging, selectedId, dragOffset, canvasWidth, canvasHeight, showGrid, elements, updateElement, getEventPosition])
 
-  // Handle mouse up
-  const handleMouseUp = () => {
+  // Handle pointer up
+  const handlePointerUp = useCallback(() => {
     setIsDragging(false)
-  }
+  }, [])
 
-  // Handle canvas click (deselect)
-  const handleCanvasClick = () => {
-    setSelectedId(null)
-  }
+  // Handle canvas click (deselect only if clicking on empty space)
+  const handleCanvasClick = useCallback((e: React.MouseEvent) => {
+    if (e.target === canvasRef.current) {
+      setSelectedId(null)
+    }
+  }, [])
+
+  // Add/remove global listeners for dragging
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handlePointerMove)
+      window.addEventListener('mouseup', handlePointerUp)
+      window.addEventListener('touchmove', handlePointerMove, { passive: false })
+      window.addEventListener('touchend', handlePointerUp)
+    }
+    
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove)
+      window.removeEventListener('mouseup', handlePointerUp)
+      window.removeEventListener('touchmove', handlePointerMove)
+      window.removeEventListener('touchend', handlePointerUp)
+    }
+  }, [isDragging, handlePointerMove, handlePointerUp])
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!selectedId) return
+      
+      const element = elements.find(el => el.id === selectedId)
+      if (!element) return
       
       switch (e.key) {
         case 'Delete':
@@ -152,32 +202,32 @@ export default function FloorPlanEditor({
           break
         case 'ArrowUp':
           e.preventDefault()
-          updateElement(selectedId, { y: (selectedElement?.y || 0) - (e.shiftKey ? 10 : 1) })
+          updateElement(selectedId, { y: element.y - (e.shiftKey ? 10 : 1) })
           break
         case 'ArrowDown':
           e.preventDefault()
-          updateElement(selectedId, { y: (selectedElement?.y || 0) + (e.shiftKey ? 10 : 1) })
+          updateElement(selectedId, { y: element.y + (e.shiftKey ? 10 : 1) })
           break
         case 'ArrowLeft':
           e.preventDefault()
-          updateElement(selectedId, { x: (selectedElement?.x || 0) - (e.shiftKey ? 10 : 1) })
+          updateElement(selectedId, { x: element.x - (e.shiftKey ? 10 : 1) })
           break
         case 'ArrowRight':
           e.preventDefault()
-          updateElement(selectedId, { x: (selectedElement?.x || 0) + (e.shiftKey ? 10 : 1) })
+          updateElement(selectedId, { x: element.x + (e.shiftKey ? 10 : 1) })
           break
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedId, selectedElement])
+  }, [selectedId, elements, deleteElement, duplicateElement, updateElement])
 
   // Render element on canvas
   const renderElement = (element: FloorPlanElement) => {
     const isSelected = element.id === selectedId
-    const baseClasses = `absolute cursor-move transition-shadow ${
-      isSelected ? 'ring-2 ring-[var(--color-primary)] ring-offset-2 ring-offset-transparent' : ''
+    const baseClasses = `absolute transition-shadow touch-none select-none ${
+      isSelected ? 'ring-2 ring-[var(--color-primary)] ring-offset-2 ring-offset-transparent z-10' : 'cursor-move'
     }`
 
     const style: React.CSSProperties = {
@@ -190,6 +240,8 @@ export default function FloorPlanEditor({
       opacity: element.opacity || 1,
     }
 
+    const handleDown = (e: React.MouseEvent | React.TouchEvent) => handlePointerDown(e, element.id)
+
     switch (element.type) {
       case 'table':
         return (
@@ -199,26 +251,30 @@ export default function FloorPlanEditor({
               element.shape === 'circle' ? 'rounded-full' : 'rounded-lg'
             }`}
             style={style}
-            onMouseDown={(e) => handleMouseDown(e, element.id)}
+            onMouseDown={handleDown}
+            onTouchStart={handleDown}
           >
             <span>{element.tableId}</span>
             {element.capacity && (
               <span className="text-[10px] opacity-75">{element.capacity}p</span>
             )}
             {element.hasView && (
-              <span className="absolute -top-1 -right-1 text-[10px]">🌅</span>
+              <span className="absolute -top-1 -right-1 text-[10px]">★</span>
             )}
           </div>
         )
       
       case 'wall':
+      case 'wall-v':
       case 'divider':
+      case 'divider-v':
         return (
           <div
             key={element.id}
             className={`${baseClasses} rounded`}
             style={style}
-            onMouseDown={(e) => handleMouseDown(e, element.id)}
+            onMouseDown={handleDown}
+            onTouchStart={handleDown}
           />
         )
       
@@ -226,84 +282,15 @@ export default function FloorPlanEditor({
         return (
           <div
             key={element.id}
-            className={`${baseClasses} rounded border-2 border-dashed`}
-            style={{ ...style, borderColor: element.color }}
-            onMouseDown={(e) => handleMouseDown(e, element.id)}
-          >
-            <div className="absolute inset-0 flex items-center justify-center text-lg">🪟</div>
-          </div>
-        )
-      
-      case 'door':
-        return (
-          <div
-            key={element.id}
-            className={`${baseClasses} rounded flex items-center justify-center`}
-            style={style}
-            onMouseDown={(e) => handleMouseDown(e, element.id)}
-          >
-            <span className="text-lg">🚪</span>
-          </div>
-        )
-      
-      case 'plant':
-        return (
-          <div
-            key={element.id}
-            className={`${baseClasses} rounded-full flex items-center justify-center`}
-            style={{ ...style, backgroundColor: 'transparent' }}
-            onMouseDown={(e) => handleMouseDown(e, element.id)}
-          >
-            <span className="text-2xl">🌿</span>
-          </div>
-        )
-      
-      case 'bar':
-        return (
-          <div
-            key={element.id}
-            className={`${baseClasses} rounded-lg flex items-center justify-center text-white text-xs font-semibold`}
-            style={style}
-            onMouseDown={(e) => handleMouseDown(e, element.id)}
-          >
-            <span>BAR</span>
-          </div>
-        )
-      
-      case 'stairs':
-        return (
-          <div
-            key={element.id}
-            className={`${baseClasses} rounded flex items-center justify-center`}
-            style={style}
-            onMouseDown={(e) => handleMouseDown(e, element.id)}
-          >
-            <span className="text-xl">📶</span>
-          </div>
-        )
-      
-      case 'restroom':
-        return (
-          <div
-            key={element.id}
-            className={`${baseClasses} rounded flex items-center justify-center`}
-            style={style}
-            onMouseDown={(e) => handleMouseDown(e, element.id)}
-          >
-            <span className="text-xl">🚻</span>
-          </div>
-        )
-      
-      case 'kitchen':
-        return (
-          <div
-            key={element.id}
-            className={`${baseClasses} rounded-lg flex items-center justify-center text-white text-xs font-semibold`}
-            style={style}
-            onMouseDown={(e) => handleMouseDown(e, element.id)}
-          >
-            <span>KITCHEN</span>
-          </div>
+            className={`${baseClasses} rounded border-2 border-dashed bg-transparent`}
+            style={{ 
+              ...style, 
+              backgroundColor: 'transparent',
+              borderColor: element.color 
+            }}
+            onMouseDown={handleDown}
+            onTouchStart={handleDown}
+          />
         )
       
       case 'entrance':
@@ -312,9 +299,10 @@ export default function FloorPlanEditor({
             key={element.id}
             className={`${baseClasses} rounded flex items-center justify-center text-white text-[10px] font-semibold`}
             style={style}
-            onMouseDown={(e) => handleMouseDown(e, element.id)}
+            onMouseDown={handleDown}
+            onTouchStart={handleDown}
           >
-            <span>ENTRANCE</span>
+            <span>ENTRY</span>
           </div>
         )
       
@@ -324,7 +312,8 @@ export default function FloorPlanEditor({
             key={element.id}
             className={`${baseClasses} flex items-center justify-center text-[var(--text-primary)] text-sm font-medium`}
             style={{ ...style, backgroundColor: 'transparent' }}
-            onMouseDown={(e) => handleMouseDown(e, element.id)}
+            onMouseDown={handleDown}
+            onTouchStart={handleDown}
           >
             <span>{element.label || 'Label'}</span>
           </div>
@@ -336,21 +325,21 @@ export default function FloorPlanEditor({
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
+    <div className="flex flex-col lg:flex-row gap-4">
       {/* Toolbar */}
-      <div className="lg:w-64 flex-shrink-0 space-y-4">
+      <div className="lg:w-56 flex-shrink-0 space-y-4">
         {/* Elements Palette */}
         <div className="glass-card rounded-xl p-4">
           <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Add Elements</h3>
-          <div className="grid grid-cols-4 lg:grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 lg:grid-cols-2 gap-2">
             {(Object.keys(ELEMENT_TEMPLATES) as ElementType[]).map((type) => (
               <button
                 key={type}
                 onClick={() => addElement(type)}
-                className="flex flex-col items-center gap-1 p-2 rounded-lg bg-[var(--bg-hover)] hover:bg-[var(--color-primary)]/20 transition-colors text-center"
+                className="flex flex-col items-center gap-1 p-2 rounded-lg bg-[var(--bg-hover)] hover:bg-[var(--color-primary)]/20 transition-colors text-center border border-transparent hover:border-[var(--color-primary)]/30"
                 title={ELEMENT_LABELS[type]}
               >
-                <span className="text-xl">{ELEMENT_ICONS[type]}</span>
+                <span className="text-lg font-bold text-[var(--text-primary)]">{ELEMENT_ICONS[type]}</span>
                 <span className="text-[10px] text-[var(--text-muted)] truncate w-full">{ELEMENT_LABELS[type]}</span>
               </button>
             ))}
@@ -379,31 +368,15 @@ export default function FloorPlanEditor({
                 max={1200}
               />
             </div>
-            <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                id="showGrid"
                 checked={showGrid}
                 onChange={(e) => setShowGrid(e.target.checked)}
-                className="form-checkbox h-4 w-4 text-[var(--color-primary)] rounded"
+                className="w-4 h-4 rounded border-[var(--glass-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
               />
-              <label htmlFor="showGrid" className="text-sm text-[var(--text-secondary)]">
-                Show Grid & Snap
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-[var(--text-secondary)]">Zoom:</label>
-              <input
-                type="range"
-                min="0.5"
-                max="1.5"
-                step="0.1"
-                value={zoom}
-                onChange={(e) => setZoom(Number(e.target.value))}
-                className="flex-1"
-              />
-              <span className="text-sm text-[var(--text-muted)]">{Math.round(zoom * 100)}%</span>
-            </div>
+              <span className="text-sm text-[var(--text-secondary)]">Snap to Grid</span>
+            </label>
           </div>
         </div>
 
@@ -412,11 +385,11 @@ export default function FloorPlanEditor({
           <div className="glass-card rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-                {ELEMENT_ICONS[selectedElement.type]} {ELEMENT_LABELS[selectedElement.type]}
+                {ELEMENT_LABELS[selectedElement.type]}
               </h3>
               <button
                 onClick={() => deleteElement(selectedElement.id)}
-                className="text-[var(--error)] hover:bg-[var(--error)]/20 p-1 rounded"
+                className="text-[var(--error)] hover:bg-[var(--error)]/20 p-1.5 rounded"
                 title="Delete"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -442,8 +415,8 @@ export default function FloorPlanEditor({
                     onChange={(e) => updateElement(selectedElement.id, { capacity: Number(e.target.value) })}
                   />
                   <div>
-                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Shape</label>
-                    <div className="flex gap-2">
+                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">Shape</label>
+                    <div className="flex gap-1">
                       {(['rectangle', 'square', 'circle'] as TableShape[]).map((shape) => (
                         <button
                           key={shape}
@@ -452,7 +425,7 @@ export default function FloorPlanEditor({
                             width: shape === 'circle' ? 60 : shape === 'square' ? 60 : 80,
                             height: 60,
                           })}
-                          className={`px-3 py-1 rounded text-xs ${
+                          className={`px-2 py-1 rounded text-xs ${
                             selectedElement.shape === shape 
                               ? 'bg-[var(--color-primary)] text-white' 
                               : 'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
@@ -463,18 +436,15 @@ export default function FloorPlanEditor({
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      id="hasView"
                       checked={selectedElement.hasView || false}
                       onChange={(e) => updateElement(selectedElement.id, { hasView: e.target.checked })}
-                      className="form-checkbox h-4 w-4 text-[var(--color-primary)] rounded"
+                      className="w-4 h-4 rounded border-[var(--glass-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                     />
-                    <label htmlFor="hasView" className="text-sm text-[var(--text-secondary)]">
-                      Has View / Window
-                    </label>
-                  </div>
+                    <span className="text-sm text-[var(--text-secondary)]">Has View</span>
+                  </label>
                 </>
               )}
 
@@ -488,14 +458,14 @@ export default function FloorPlanEditor({
 
               <div className="grid grid-cols-2 gap-2">
                 <Input
-                  label="Width"
+                  label="W"
                   type="number"
                   value={selectedElement.width}
                   onChange={(e) => updateElement(selectedElement.id, { width: Number(e.target.value) })}
                   min={20}
                 />
                 <Input
-                  label="Height"
+                  label="H"
                   type="number"
                   value={selectedElement.height}
                   onChange={(e) => updateElement(selectedElement.id, { height: Number(e.target.value) })}
@@ -503,46 +473,22 @@ export default function FloorPlanEditor({
                 />
               </div>
 
-              <Input
-                label="Rotation (°)"
-                type="number"
-                value={selectedElement.rotation}
-                onChange={(e) => updateElement(selectedElement.id, { rotation: Number(e.target.value) })}
-                min={0}
-                max={360}
-                step={15}
-              />
-
-              <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Color</label>
-                <input
-                  type="color"
-                  value={selectedElement.color || '#706459'}
-                  onChange={(e) => updateElement(selectedElement.id, { color: e.target.value })}
-                  className="w-full h-10 rounded cursor-pointer"
-                />
-              </div>
-
               <button
                 onClick={() => duplicateElement(selectedElement.id)}
                 className="w-full py-2 text-sm bg-[var(--bg-hover)] text-[var(--text-secondary)] rounded-lg hover:bg-[var(--color-primary)]/20 transition-colors"
               >
-                Duplicate Element
+                Duplicate
               </button>
             </div>
           </div>
         )}
 
-        {/* Keyboard Shortcuts */}
-        <div className="glass-card rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Shortcuts</h3>
-          <div className="text-xs text-[var(--text-muted)] space-y-1">
-            <p>• Arrow keys: Move element</p>
-            <p>• Shift + Arrow: Move faster</p>
-            <p>• Delete: Remove element</p>
-            <p>• Ctrl/⌘ + D: Duplicate</p>
-            <p>• Click canvas: Deselect</p>
-          </div>
+        {/* Help */}
+        <div className="text-xs text-[var(--text-muted)] px-1 space-y-0.5">
+          <p>• Click element to select</p>
+          <p>• Drag to move</p>
+          <p>• Arrow keys to nudge</p>
+          <p>• Delete key to remove</p>
         </div>
       </div>
 
@@ -550,27 +496,22 @@ export default function FloorPlanEditor({
       <div className="flex-1 flex flex-col">
         <div 
           className="flex-1 overflow-auto glass-card rounded-xl p-4"
-          style={{ maxHeight: '70vh' }}
+          style={{ maxHeight: '65vh' }}
         >
           <div
             ref={canvasRef}
             className="relative mx-auto border-2 border-dashed border-[var(--glass-border)] rounded-lg overflow-hidden"
             style={{
-              width: canvasWidth * zoom,
-              height: canvasHeight * zoom,
+              width: canvasWidth,
+              height: canvasHeight,
               backgroundColor: 'var(--bg-card)',
               backgroundImage: showGrid 
                 ? `linear-gradient(to right, var(--glass-border) 1px, transparent 1px),
                    linear-gradient(to bottom, var(--glass-border) 1px, transparent 1px)`
                 : 'none',
-              backgroundSize: showGrid ? `${10 * zoom}px ${10 * zoom}px` : 'auto',
-              transform: `scale(${zoom})`,
-              transformOrigin: 'top left',
+              backgroundSize: showGrid ? '10px 10px' : 'auto',
             }}
             onClick={handleCanvasClick}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
           >
             {elements.map(renderElement)}
           </div>
@@ -579,7 +520,7 @@ export default function FloorPlanEditor({
         {/* Actions */}
         <div className="flex justify-between items-center mt-4 pt-4 border-t border-[var(--glass-border)]">
           <div className="text-sm text-[var(--text-muted)]">
-            {elements.filter(e => e.type === 'table').length} tables • {elements.length} total elements
+            {elements.filter(e => e.type === 'table').length} tables • {elements.length} elements
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={onCancel}>
