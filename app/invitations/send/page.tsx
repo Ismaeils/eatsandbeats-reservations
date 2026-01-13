@@ -41,12 +41,13 @@ export default function SendInvitationPage() {
   if (success) {
     return (
       <Layout>
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[var(--text-primary)]">Send Invitation</h1>
           <Card>
-            <div className="text-center">
-              <div className="mb-6">
+            <div className="text-center py-4 sm:py-6">
+              <div className="mb-4 sm:mb-6">
                 <svg
-                  className="mx-auto h-16 w-16 text-[var(--success)]"
+                  className="mx-auto h-12 w-12 sm:h-16 sm:w-16 text-[var(--success)]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -59,19 +60,19 @@ export default function SendInvitationPage() {
                   />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-2 sm:mb-4">
                 Invitation Sent!
-              </h1>
-              <p className="text-[var(--text-secondary)] mb-6">
-                The reservation invitation has been sent to {phoneNumber}
+              </h2>
+              <p className="text-[var(--text-secondary)] text-sm sm:text-base mb-4 sm:mb-6">
+                The invitation has been sent to {phoneNumber}
               </p>
               {invitationData?.webFormUrl && (
-                <div className="bg-[var(--bg-hover)] rounded-lg p-4 mb-6 border border-[var(--glass-border)]">
-                  <p className="text-[var(--text-muted)] text-sm mb-2">Web Form URL:</p>
-                  <p className="text-[var(--color-primary)] text-sm break-all font-medium">{invitationData.webFormUrl}</p>
+                <div className="bg-[var(--bg-hover)] rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 border border-[var(--glass-border)]">
+                  <p className="text-[var(--text-muted)] text-xs sm:text-sm mb-1 sm:mb-2">Web Form URL:</p>
+                  <p className="text-[var(--color-primary)] text-xs sm:text-sm break-all font-medium">{invitationData.webFormUrl}</p>
                 </div>
               )}
-              <p className="text-[var(--text-muted)] text-sm">
+              <p className="text-[var(--text-muted)] text-xs sm:text-sm">
                 Redirecting to dashboard...
               </p>
             </div>
@@ -83,20 +84,19 @@ export default function SendInvitationPage() {
 
   return (
     <Layout>
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[var(--text-primary)]">Send Invitation</h1>
+        
         <Card>
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">
-              Send Reservation Invitation
-            </h1>
-            <p className="text-[var(--text-secondary)]">
+          <div className="text-center mb-6 sm:mb-8">
+            <p className="text-[var(--text-secondary)] text-sm sm:text-base">
               Enter the guest&apos;s phone number to send them a reservation invitation
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {error && (
-              <div className="bg-[var(--error)]/20 border border-[var(--error)]/50 text-[var(--error)] px-4 py-3 rounded-lg">
+              <div className="bg-[var(--error)]/20 border border-[var(--error)]/50 text-[var(--error)] px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
@@ -110,16 +110,16 @@ export default function SendInvitationPage() {
               placeholder="+1234567890"
             />
 
-            <div className="flex gap-4">
+            <div className="flex gap-2 sm:gap-4 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.back()}
-                className="flex-1"
+                className="flex-1 text-sm sm:text-base py-2.5 sm:py-3"
               >
                 Cancel
               </Button>
-              <Button type="submit" isLoading={isLoading} className="flex-1">
+              <Button type="submit" isLoading={isLoading} className="flex-1 text-sm sm:text-base py-2.5 sm:py-3">
                 Send Invitation
               </Button>
             </div>

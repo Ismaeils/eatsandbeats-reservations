@@ -134,7 +134,12 @@ export default function EditReservationPage() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-[var(--text-secondary)] text-xl">Loading...</div>
+          <div className="flex flex-col items-center gap-3">
+            <svg className="animate-spin h-8 w-8 text-[var(--color-primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
         </div>
       </Layout>
     )
@@ -154,40 +159,40 @@ export default function EditReservationPage() {
 
   return (
     <Layout>
-      <div className="max-w-2xl mx-auto">
-        <Card>
-          <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-6">Edit Reservation</h1>
+      <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[var(--text-primary)]">Edit Reservation</h1>
 
+        <Card>
           {error && (
-            <div className="bg-[var(--error)]/20 border border-[var(--error)]/50 text-[var(--error)] px-4 py-3 rounded-lg mb-6">
+            <div className="bg-[var(--error)]/20 border border-[var(--error)]/50 text-[var(--error)] px-3 sm:px-4 py-2 sm:py-3 rounded-lg mb-4 sm:mb-6 text-sm">
               {error}
             </div>
           )}
 
           {/* Warning for unassigned table */}
           {!reservation.tableId && (
-            <div className="bg-[var(--warning)]/20 border border-[var(--warning)]/50 text-[var(--warning)] px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-[var(--warning)]/20 border border-[var(--warning)]/50 text-[var(--warning)] px-3 sm:px-4 py-2 sm:py-3 rounded-lg mb-4 sm:mb-6 flex items-start sm:items-center gap-2 text-sm">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5 sm:mt-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
-              <span>This reservation has no table assigned. Please assign a table below.</span>
+              <span>No table assigned. Please assign a table below.</span>
             </div>
           )}
 
-          <div className="mb-6 space-y-2">
-            <p className="text-[var(--text-secondary)]">
+          <div className="mb-4 sm:mb-6 space-y-1.5 sm:space-y-2">
+            <p className="text-[var(--text-secondary)] text-sm sm:text-base">
               <span className="font-semibold text-[var(--text-primary)]">Guest:</span> {reservation.guestName}
             </p>
-            <p className="text-[var(--text-secondary)]">
+            <p className="text-[var(--text-secondary)] text-sm sm:text-base">
               <span className="font-semibold text-[var(--text-primary)]">Contact:</span> {reservation.guestContact}
             </p>
-            <p className="text-[var(--text-secondary)]">
+            <p className="text-[var(--text-secondary)] text-sm sm:text-base">
               <span className="font-semibold text-[var(--text-primary)]">Party Size:</span> {reservation.numberOfPeople}
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               <Input
                 label="From"
                 type="datetime-local"
@@ -207,16 +212,19 @@ export default function EditReservationPage() {
 
             {restaurant && (
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                   <label className="block text-sm font-medium text-[var(--text-secondary)]">
                     Table
                   </label>
                   {isLoadingTables && (
-                    <span className="text-xs text-[var(--text-muted)]">Loading available tables...</span>
+                    <svg className="animate-spin h-4 w-4 text-[var(--text-muted)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                   )}
                 </div>
                 <select
-                  className={`w-full px-4 py-3 rounded-lg bg-[var(--bg-card)] border text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] shadow-sm ${
+                  className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg bg-[var(--bg-card)] border text-sm sm:text-base text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] shadow-sm ${
                     currentTableIsOccupied ? 'border-[var(--warning)]' : 'border-[var(--glass-border)]'
                   }`}
                   value={formData.tableId}
@@ -248,10 +256,10 @@ export default function EditReservationPage() {
                 </select>
 
                 {/* Status info */}
-                <div className="mt-2 text-xs text-[var(--text-muted)]">
+                <div className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-[var(--text-muted)]">
                   {availableTables.length === 0 && !isLoadingTables ? (
                     <span className="text-[var(--warning)]">
-                      ⚠ No tables available for this time slot
+                      No tables available for this time slot
                     </span>
                   ) : (
                     <span>
@@ -261,29 +269,29 @@ export default function EditReservationPage() {
                 </div>
 
                 {currentTableIsOccupied && (
-                  <div className="mt-2 text-sm text-[var(--warning)] flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-[var(--warning)] flex items-start gap-1">
+                    <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
-                    <span>Currently selected table is occupied at this time. Please select a different table.</span>
+                    <span>Selected table is occupied. Please select a different table.</span>
                   </div>
                 )}
               </div>
             )}
 
-            <div className="flex gap-4">
+            <div className="flex gap-2 sm:gap-4 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.back()}
-                className="flex-1"
+                className="flex-1 text-sm sm:text-base py-2.5 sm:py-3"
               >
                 Cancel
               </Button>
               <Button 
                 type="submit" 
                 isLoading={isSaving} 
-                className="flex-1"
+                className="flex-1 text-sm sm:text-base py-2.5 sm:py-3"
                 disabled={currentTableIsOccupied}
               >
                 Save Changes

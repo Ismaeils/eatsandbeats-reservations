@@ -373,7 +373,12 @@ export default function RestaurantConfigPage() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-[var(--text-secondary)] text-xl">Loading...</div>
+          <div className="flex flex-col items-center gap-3">
+            <svg className="animate-spin h-8 w-8 text-[var(--color-primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
         </div>
       </Layout>
     )
@@ -381,42 +386,41 @@ export default function RestaurantConfigPage() {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <Card>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 sm:gap-4 lg:gap-6">
             <RestaurantLogo 
               logoUrl={restaurant?.logoUrl} 
               restaurantName={restaurant?.name}
               size="lg"
             />
             <div>
-              <h1 className="text-3xl font-bold text-[var(--text-primary)]">Restaurant Settings</h1>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[var(--text-primary)]">Settings</h1>
               {restaurant && (
-                <p className="text-[var(--text-secondary)] mt-1">{restaurant.name}</p>
+                <p className="text-[var(--text-secondary)] text-sm sm:text-base mt-0.5 sm:mt-1">{restaurant.name}</p>
               )}
             </div>
           </div>
         </Card>
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-2 border-b border-[var(--glass-border)] pb-2">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 border-b border-[var(--glass-border)] pb-2">
           {[
-            { id: 'general', label: 'General', icon: '⚙️' },
-            { id: 'hours', label: 'Opening Hours', icon: '🕐' },
-            { id: 'exceptions', label: 'Exceptions', icon: '📅' },
-            { id: 'floorplan', label: 'Floor Plan', icon: '🗺️' },
+            { id: 'general', label: 'General' },
+            { id: 'hours', label: 'Hours' },
+            { id: 'exceptions', label: 'Exceptions' },
+            { id: 'floorplan', label: 'Floor Plan' },
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                 activeTab === tab.id
                   ? 'bg-[var(--color-primary)] text-[var(--bg-app)]'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
               }`}
             >
-              <span>{tab.icon}</span>
               {tab.label}
             </button>
           ))}
@@ -424,12 +428,12 @@ export default function RestaurantConfigPage() {
 
         {/* Messages */}
         {error && (
-          <div className="bg-[var(--error)]/20 border border-[var(--error)]/50 text-[var(--error)] px-4 py-3 rounded-lg">
+          <div className="bg-[var(--error)]/20 border border-[var(--error)]/50 text-[var(--error)] px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-sm">
             {error}
           </div>
         )}
         {success && (
-          <div className="bg-[var(--success)]/20 border border-[var(--success)]/50 text-[var(--success)] px-4 py-3 rounded-lg">
+          <div className="bg-[var(--success)]/20 border border-[var(--success)]/50 text-[var(--success)] px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-sm">
             {success}
           </div>
         )}
@@ -437,7 +441,7 @@ export default function RestaurantConfigPage() {
         {/* General Settings Tab */}
         {activeTab === 'general' && (
           <Card>
-            <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-6">General Settings</h2>
+            <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-[var(--text-primary)] mb-4 sm:mb-6">General Settings</h2>
             
             {restaurant && (
               <div className="mb-6 space-y-2 text-[var(--text-secondary)] pb-6 border-b border-[var(--glass-border)]">

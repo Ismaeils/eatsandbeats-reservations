@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { FloorPlanElement, ELEMENT_ICONS } from '@/types/floor-plan'
+import { FloorPlanElement } from '@/types/floor-plan'
 
 interface FloorPlan {
   id: string
@@ -100,7 +100,7 @@ export default function FloorPlanViewer({
               <span className="text-[10px] opacity-75">{element.capacity}p</span>
             )}
             {element.hasView && (
-              <span className="absolute -top-1 -right-1 text-[10px]">🌅</span>
+              <span className="absolute -top-1 -right-1 text-[10px]">★</span>
             )}
             {isOccupied && (
               <span className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-inherit">
@@ -113,7 +113,9 @@ export default function FloorPlanViewer({
         )
       
       case 'wall':
+      case 'wall-v':
       case 'divider':
+      case 'divider-v':
         return (
           <div
             key={element.id}
@@ -128,75 +130,7 @@ export default function FloorPlanViewer({
             key={element.id}
             className="absolute rounded border-2 border-dashed pointer-events-none"
             style={{ ...style, borderColor: element.color, backgroundColor: 'transparent' }}
-          >
-            <div className="absolute inset-0 flex items-center justify-center text-sm">🪟</div>
-          </div>
-        )
-      
-      case 'door':
-        return (
-          <div
-            key={element.id}
-            className="absolute rounded flex items-center justify-center pointer-events-none"
-            style={style}
-          >
-            <span className={compact ? 'text-sm' : 'text-lg'}>🚪</span>
-          </div>
-        )
-      
-      case 'plant':
-        return (
-          <div
-            key={element.id}
-            className="absolute rounded-full flex items-center justify-center pointer-events-none"
-            style={{ ...style, backgroundColor: 'transparent' }}
-          >
-            <span className={compact ? 'text-lg' : 'text-2xl'}>🌿</span>
-          </div>
-        )
-      
-      case 'bar':
-        return (
-          <div
-            key={element.id}
-            className="absolute rounded-lg flex items-center justify-center text-white text-xs font-semibold pointer-events-none"
-            style={style}
-          >
-            <span>BAR</span>
-          </div>
-        )
-      
-      case 'stairs':
-        return (
-          <div
-            key={element.id}
-            className="absolute rounded flex items-center justify-center pointer-events-none"
-            style={style}
-          >
-            <span className={compact ? 'text-sm' : 'text-xl'}>📶</span>
-          </div>
-        )
-      
-      case 'restroom':
-        return (
-          <div
-            key={element.id}
-            className="absolute rounded flex items-center justify-center pointer-events-none"
-            style={style}
-          >
-            <span className={compact ? 'text-sm' : 'text-xl'}>🚻</span>
-          </div>
-        )
-      
-      case 'kitchen':
-        return (
-          <div
-            key={element.id}
-            className="absolute rounded-lg flex items-center justify-center text-white text-xs font-semibold pointer-events-none"
-            style={style}
-          >
-            <span>KITCHEN</span>
-          </div>
+          />
         )
       
       case 'entrance':
@@ -206,7 +140,7 @@ export default function FloorPlanViewer({
             className="absolute rounded flex items-center justify-center text-white text-[10px] font-semibold pointer-events-none"
             style={style}
           >
-            <span>ENTRANCE</span>
+            <span>ENTRY</span>
           </div>
         )
       
@@ -268,7 +202,7 @@ export default function FloorPlanViewer({
             Occupied
           </span>
           <span className="flex items-center gap-1">
-            <span>🌅</span>
+            <span className="text-[10px]">★</span>
             Has View
           </span>
           <span className="ml-auto text-[var(--text-secondary)]">

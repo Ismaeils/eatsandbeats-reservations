@@ -3,14 +3,10 @@
 export type ElementType = 
   | 'table' 
   | 'divider' 
+  | 'divider-v'
   | 'wall' 
+  | 'wall-v'
   | 'window' 
-  | 'door' 
-  | 'plant' 
-  | 'bar' 
-  | 'stairs' 
-  | 'restroom'
-  | 'kitchen'
   | 'entrance'
   | 'label'
 
@@ -81,10 +77,22 @@ export const ELEMENT_TEMPLATES: Record<ElementType, Partial<FloorPlanElement>> =
     height: 8,
     color: '#958d84',
   },
+  'divider-v': {
+    type: 'divider-v',
+    width: 8,
+    height: 100,
+    color: '#958d84',
+  },
   wall: {
     type: 'wall',
     width: 150,
     height: 12,
+    color: '#1f1f1d',
+  },
+  'wall-v': {
+    type: 'wall-v',
+    width: 12,
+    height: 150,
     color: '#1f1f1d',
   },
   window: {
@@ -93,42 +101,6 @@ export const ELEMENT_TEMPLATES: Record<ElementType, Partial<FloorPlanElement>> =
     height: 12,
     color: '#6a7d91',
     isWindow: true,
-  },
-  door: {
-    type: 'door',
-    width: 50,
-    height: 8,
-    color: '#b8963d',
-  },
-  plant: {
-    type: 'plant',
-    width: 30,
-    height: 30,
-    color: '#5a8a5a',
-  },
-  bar: {
-    type: 'bar',
-    width: 120,
-    height: 40,
-    color: '#554636',
-  },
-  stairs: {
-    type: 'stairs',
-    width: 60,
-    height: 80,
-    color: '#8E8A80',
-  },
-  restroom: {
-    type: 'restroom',
-    width: 40,
-    height: 40,
-    color: '#7A8FA3',
-  },
-  kitchen: {
-    type: 'kitchen',
-    width: 100,
-    height: 80,
-    color: '#a34a3a',
   },
   entrance: {
     type: 'entrance',
@@ -147,31 +119,23 @@ export const ELEMENT_TEMPLATES: Record<ElementType, Partial<FloorPlanElement>> =
 
 // Icons for each element type
 export const ELEMENT_ICONS: Record<ElementType, string> = {
-  table: '🪑',
-  divider: '➖',
-  wall: '🧱',
-  window: '🪟',
-  door: '🚪',
-  plant: '🌿',
-  bar: '🍸',
-  stairs: '📶',
-  restroom: '🚻',
-  kitchen: '👨‍🍳',
-  entrance: '🚶',
-  label: '🏷️',
+  table: '◻',
+  divider: '―',
+  'divider-v': '│',
+  wall: '▬',
+  'wall-v': '▮',
+  window: '▢',
+  entrance: '⌂',
+  label: 'T',
 }
 
 export const ELEMENT_LABELS: Record<ElementType, string> = {
   table: 'Table',
   divider: 'Divider',
+  'divider-v': 'Divider (V)',
   wall: 'Wall',
+  'wall-v': 'Wall (V)',
   window: 'Window',
-  door: 'Door',
-  plant: 'Plant',
-  bar: 'Bar',
-  stairs: 'Stairs',
-  restroom: 'Restroom',
-  kitchen: 'Kitchen',
   entrance: 'Entrance',
-  label: 'Text Label',
+  label: 'Text',
 }

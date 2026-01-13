@@ -11,12 +11,14 @@ export default function InvitationConfirmedPage() {
 
   return (
     <Layout>
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[var(--text-primary)]">Invitation</h1>
+        
         <Card>
-          <div className="text-center">
-            <div className="mb-6">
+          <div className="text-center py-4 sm:py-6">
+            <div className="mb-4 sm:mb-6">
               <svg
-                className="mx-auto h-16 w-16 text-[var(--success)]"
+                className="mx-auto h-12 w-12 sm:h-16 sm:w-16 text-[var(--success)]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -29,19 +31,19 @@ export default function InvitationConfirmedPage() {
                 />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-4">
-              Invitation Sent Successfully!
-            </h1>
-            <p className="text-[var(--text-secondary)] mb-8">
-              The reservation invitation has been sent. The guest will receive a message
-              with instructions to complete their reservation.
+            <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-2 sm:mb-4">
+              Sent Successfully!
+            </h2>
+            <p className="text-[var(--text-secondary)] text-sm sm:text-base mb-6 sm:mb-8">
+              The guest will receive a message with instructions to complete their reservation.
             </p>
-            <div className="flex gap-4 justify-center">
+            <div className="flex gap-2 sm:gap-4 justify-center">
               <Link href="/dashboard">
-                <Button variant="primary">Back to Dashboard</Button>
+                <Button variant="primary" className="text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3">Dashboard</Button>
               </Link>
               <Button
                 variant="outline"
+                className="text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
                 onClick={() => router.push('/invitations/send')}
               >
                 Send Another
