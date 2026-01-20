@@ -18,13 +18,13 @@ const config: Config = {
           primary: '#706459',
           secondary: '#958d84',
           accent: '#b2a798',
-          light: '#e0e1dd',
+          light: '#f6f5f4',
         },
         surface: {
-          app: '#e0e1dd',
+          app: '#f6f5f4',
           nav: '#1f1f1d',
           card: '#ffffff',
-          hover: '#f5f5f3',
+          hover: '#eeecea',
         },
         content: {
           primary: '#1f1f1d',

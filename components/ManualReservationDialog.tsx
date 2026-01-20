@@ -195,9 +195,9 @@ export default function ManualReservationDialog({
       
       {/* Dialog */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-3xl bg-[var(--bg-card)] rounded-2xl shadow-2xl border border-[var(--glass-border)] max-h-[90vh] overflow-y-auto">
+        <div className="relative w-full max-w-3xl bg-[var(--bg-card)] rounded-2xl shadow-2xl border border-[var(--border-color)] max-h-[90vh] overflow-y-auto">
           {/* Header */}
-          <div className="sticky top-0 bg-[var(--bg-card)] border-b border-[var(--glass-border)] px-6 py-4 flex items-center justify-between z-10">
+          <div className="sticky top-0 bg-[var(--bg-card)] border-b border-[var(--border-color)] px-6 py-4 flex items-center justify-between z-10">
             <div>
               <h2 className="text-2xl font-bold text-[var(--text-primary)]">Create Manual Reservation</h2>
               <p className="text-sm text-[var(--text-muted)]">Fill in guest details to create a reservation</p>
@@ -333,7 +333,7 @@ export default function ManualReservationDialog({
 
                     {/* Floor Plan View */}
                     {hasVisualLayout && showFloorPlan && (
-                      <div className="border border-[var(--glass-border)] rounded-xl p-4 bg-[var(--bg-hover)]">
+                      <div className="border border-[var(--border-color)] rounded-xl p-4 bg-[var(--bg-hover)]">
                         <FloorPlanViewer
                           floorPlans={floorPlans}
                           selectedTableId={formData.tableId || null}
@@ -345,7 +345,7 @@ export default function ManualReservationDialog({
 
                     {/* Table Selection Dropdown */}
                     <select
-                      className="w-full px-4 py-3 rounded-lg bg-[var(--bg-card)] border border-[var(--glass-border)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] shadow-sm"
+                      className="w-full px-4 py-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] shadow-sm"
                       value={formData.tableId}
                       onChange={(e) => setFormData({ ...formData, tableId: e.target.value })}
                     >
@@ -406,7 +406,7 @@ export default function ManualReservationDialog({
 
                 {/* Summary */}
                 {formData.selectedDate && formData.selectedTime && (
-                  <div className="bg-[var(--bg-hover)] rounded-lg p-4 border border-[var(--glass-border)]">
+                  <div className="bg-[var(--bg-hover)] rounded-2xl p-4 border border-[var(--border-color)]">
                     <h3 className="text-sm font-medium text-[var(--text-secondary)] mb-2">Reservation Summary</h3>
                     <div className="space-y-1">
                       <p className="text-[var(--text-primary)]">
@@ -435,7 +435,7 @@ export default function ManualReservationDialog({
                 )}
 
                 {/* Actions */}
-                <div className="flex gap-4 pt-4 border-t border-[var(--glass-border)]">
+                <div className="flex gap-4 pt-4 border-t border-[var(--border-color)]">
                   <Button
                     type="button"
                     variant="outline"

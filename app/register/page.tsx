@@ -361,7 +361,7 @@ export default function RegisterPage() {
                           type="checkbox"
                           checked={hour.isOpen}
                           onChange={(e) => updateHour(day.value, 'isOpen', e.target.checked)}
-                          className="w-5 h-5 rounded border-[var(--glass-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                          className="w-5 h-5 rounded border-[var(--border-color)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                         />
                         <span className="text-sm text-[var(--text-secondary)]">Open</span>
                       </label>
@@ -372,14 +372,14 @@ export default function RegisterPage() {
                             type="time"
                             value={hour.openTime || '09:00'}
                             onChange={(e) => updateHour(day.value, 'openTime', e.target.value)}
-                            className="px-3 py-2 rounded-lg bg-[var(--bg-card)] border border-[var(--glass-border)] text-[var(--text-primary)] text-sm"
+                            className="px-3 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm"
                           />
                           <span className="text-[var(--text-muted)]">to</span>
                           <input
                             type="time"
                             value={hour.closeTime || '22:00'}
                             onChange={(e) => updateHour(day.value, 'closeTime', e.target.value)}
-                            className="px-3 py-2 rounded-lg bg-[var(--bg-card)] border border-[var(--glass-border)] text-[var(--text-primary)] text-sm"
+                            className="px-3 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm"
                           />
                         </div>
                       )}
@@ -424,7 +424,7 @@ export default function RegisterPage() {
                 onCancel={handlePrevStep}
               />
 
-              <div className="flex items-center justify-between pt-4 border-t border-[var(--glass-border)]">
+              <div className="flex items-center justify-between pt-4 border-t border-[var(--border-color)]">
                 <div className="text-sm text-[var(--text-secondary)]">
                   {tableCount > 0 ? (
                     <span className="text-[var(--success)]">✓ {tableCount} table{tableCount > 1 ? 's' : ''} added</span>

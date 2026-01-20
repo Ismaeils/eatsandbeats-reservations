@@ -11,7 +11,7 @@ export default function Card({ children, className = '' }: CardProps) {
   const defaultPadding = hasCustomPadding ? '' : 'p-4 sm:p-5 lg:p-6'
   
   return (
-    <div className={`glass-card rounded-xl ${defaultPadding} ${className}`}>
+    <div className={`glass-card rounded-2xl ${defaultPadding} ${className}`}>
       {children}
     </div>
   )

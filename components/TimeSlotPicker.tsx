@@ -167,7 +167,7 @@ export default function TimeSlotPicker({
         <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
           Select Date
         </label>
-        <div className="bg-[var(--bg-card)] border border-[var(--glass-border)] rounded-lg p-4">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4">
           {/* Month Navigation */}
           <div className="flex justify-between items-center mb-4">
             <button
@@ -242,7 +242,7 @@ export default function TimeSlotPicker({
             Select Time ({reservationDuration / 60}hr reservation)
           </label>
           {timeSlots.length === 0 ? (
-            <div className="bg-[var(--bg-card)] border border-[var(--glass-border)] rounded-lg p-4 text-center text-[var(--text-muted)]">
+            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4 text-center text-[var(--text-muted)]">
               No available time slots for this date
             </div>
           ) : (
@@ -252,10 +252,10 @@ export default function TimeSlotPicker({
                   key={time}
                   type="button"
                   onClick={() => onTimeChange(time)}
-                  className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+                  className={`px-3 py-2 text-sm rounded-xl border transition-colors ${
                     selectedTime === time
                       ? 'bg-[var(--color-primary)] text-[var(--bg-app)] border-[var(--color-primary)]'
-                      : 'bg-[var(--bg-card)] border-[var(--glass-border)] text-[var(--text-primary)] hover:border-[var(--color-primary)]'
+                      : 'bg-[var(--bg-card)] border-[var(--border-color)] text-[var(--text-primary)] hover:border-[var(--color-primary)]'
                   }`}
                 >
                   {formatTimeSlot(time)}

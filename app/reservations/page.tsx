@@ -182,7 +182,7 @@ export default function ReservationsPage() {
             </div>
             <div className="sm:w-48">
               <select
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg bg-[var(--bg-card)] border border-[var(--glass-border)] text-[var(--text-primary)] text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -223,7 +223,7 @@ export default function ReservationsPage() {
                     className={`bg-[var(--bg-card)] border rounded-lg p-2.5 sm:p-3 lg:p-4 transition-all ${
                       hasNoTable && !isPast 
                         ? 'border-[var(--warning)]/50 bg-[var(--warning)]/5' 
-                        : 'border-[var(--glass-border)]'
+                        : 'border-[var(--border-color)]'
                     } ${
                       isPast ? 'opacity-70' : 'hover:border-[var(--color-primary)]/50 hover:shadow-md'
                     }`}

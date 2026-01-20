@@ -85,7 +85,7 @@ export default function Layout({ children }: LayoutProps) {
               {/* Restaurant Logo - if available (hidden on mobile) */}
               {restaurant && (
                 <div className="hidden sm:flex items-center gap-3">
-                  <div className="h-8 w-px bg-[var(--glass-border)]" />
+                  <div className="h-8 w-px bg-[var(--border-color)]" />
                   <RestaurantLogo 
                     logoUrl={restaurant.logoUrl} 
                     restaurantName={restaurant.name}
@@ -110,7 +110,7 @@ export default function Layout({ children }: LayoutProps) {
               ))}
               
               {/* Divider */}
-              <div className="h-6 w-px bg-[var(--glass-border)] mx-2" />
+              <div className="h-6 w-px bg-[var(--border-color)] mx-2" />
               
               {/* Theme Toggle */}
               <ThemeToggle />
@@ -152,7 +152,7 @@ export default function Layout({ children }: LayoutProps) {
 
           {/* Mobile Menu Dropdown */}
           {mobileMenuOpen && (
-            <div className="md:hidden py-4 border-t border-[var(--glass-border)]">
+            <div className="md:hidden py-4 border-t border-[var(--border-color)]">
               <div className="flex flex-col gap-1">
                 {navLinks.map((link) => (
                   <Link
@@ -169,7 +169,7 @@ export default function Layout({ children }: LayoutProps) {
                 ))}
                 
                 {/* Divider */}
-                <div className="h-px bg-[var(--glass-border)] my-2" />
+                <div className="h-px bg-[var(--border-color)] my-2" />
                 
                 {/* User info */}
                 {user && (

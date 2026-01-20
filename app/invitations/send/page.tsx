@@ -67,7 +67,7 @@ export default function SendInvitationPage() {
                 The invitation has been sent to {phoneNumber}
               </p>
               {invitationData?.webFormUrl && (
-                <div className="bg-[var(--bg-hover)] rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 border border-[var(--glass-border)]">
+                <div className="bg-[var(--bg-hover)] rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6 border border-[var(--border-color)]">
                   <p className="text-[var(--text-muted)] text-xs sm:text-sm mb-1 sm:mb-2">Web Form URL:</p>
                   <p className="text-[var(--color-primary)] text-xs sm:text-sm break-all font-medium">{invitationData.webFormUrl}</p>
                 </div>

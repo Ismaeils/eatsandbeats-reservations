@@ -234,7 +234,7 @@ export default function FloorPlanViewer({
         style={{ maxHeight: compact ? '300px' : '500px' }}
       >
         <div
-          className="relative mx-auto border border-[var(--glass-border)] rounded-lg"
+          className="relative mx-auto border border-[var(--border-color)] rounded-2xl"
           style={{
             width: activeFloor.width * zoom,
             height: activeFloor.height * zoom,
