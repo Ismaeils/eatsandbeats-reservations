@@ -1,9 +1,31 @@
-import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { errorResponse, successResponse, unauthorizedResponse } from '@/lib/api-response'
 import { getCurrentUser } from '@/lib/auth'
-import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/api-response'
+import { prisma } from '@/lib/prisma'
 import { sendInvitationSchema } from '@/lib/validations'
 import { randomBytes } from 'crypto'
+import { NextRequest } from 'next/server'
+
+function getBaseUrl(request: NextRequest): string {
+  // First, try to use the explicitly configured URL
+  if (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')) {
+    return process.env.NEXT_PUBLIC_APP_URL
+  }
+
+  // On Vercel, use the automatic environment variables
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+
+  // Fallback: extract from request headers (works for any deployment)
+  const host = request.headers.get('host')
+  const protocol = request.headers.get('x-forwarded-proto') || 'https'
+  if (host) {
+    return `${protocol}://${host}`
+  }
+
+  // Last resort fallback
+  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,10 +92,12 @@ export async function POST(request: NextRequest) {
       data: { status: 'SENT' },
     })
 
+    const baseUrl = getBaseUrl(request)
+
     return successResponse(
       {
         invitation: updatedInvitation,
-        webFormUrl: `${process.env.NEXT_PUBLIC_APP_URL}/reservation-form/${webFormToken}`,
+        webFormUrl: `${baseUrl}/reservation-form/${webFormToken}`,
       },
       'Reservation invitation sent'
     )
