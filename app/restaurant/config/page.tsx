@@ -405,7 +405,7 @@ export default function RestaurantConfigPage() {
         </Card>
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-1.5 sm:gap-2 border-b border-[var(--glass-border)] pb-2">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 border-b border-[var(--border-color)] pb-2">
           {[
             { id: 'general', label: 'General' },
             { id: 'hours', label: 'Hours' },
@@ -444,7 +444,7 @@ export default function RestaurantConfigPage() {
             <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-[var(--text-primary)] mb-4 sm:mb-6">General Settings</h2>
             
             {restaurant && (
-              <div className="mb-6 space-y-2 text-[var(--text-secondary)] pb-6 border-b border-[var(--glass-border)]">
+              <div className="mb-6 space-y-2 text-[var(--text-secondary)] pb-6 border-b border-[var(--border-color)]">
                 <p><span className="font-semibold text-[var(--text-primary)]">Name:</span> {restaurant.name}</p>
                 <p><span className="font-semibold text-[var(--text-primary)]">Address:</span> {restaurant.address}</p>
                 <p className="text-sm text-[var(--text-muted)]">Name and address cannot be changed</p>
@@ -503,7 +503,7 @@ export default function RestaurantConfigPage() {
               </div>
 
               {/* Table Layout - Read Only (managed via Floor Plan) */}
-              <div className="p-4 bg-[var(--bg-hover)] rounded-lg border border-[var(--glass-border)]">
+              <div className="p-4 bg-[var(--bg-hover)] rounded-2xl border border-[var(--border-color)]">
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-medium text-[var(--text-primary)]">
                     Table Layout
@@ -569,7 +569,7 @@ export default function RestaurantConfigPage() {
                         type="checkbox"
                         checked={hour.isOpen}
                         onChange={(e) => updateHour(day.value, 'isOpen', e.target.checked)}
-                        className="w-5 h-5 rounded border-[var(--glass-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                        className="w-5 h-5 rounded border-[var(--border-color)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                       />
                       <span className="text-sm text-[var(--text-secondary)]">Open</span>
                     </label>
@@ -580,14 +580,14 @@ export default function RestaurantConfigPage() {
                           type="time"
                           value={hour.openTime || '09:00'}
                           onChange={(e) => updateHour(day.value, 'openTime', e.target.value)}
-                          className="px-3 py-2 rounded-lg bg-[var(--bg-card)] border border-[var(--glass-border)] text-[var(--text-primary)] text-sm"
+                          className="px-3 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm"
                         />
                         <span className="text-[var(--text-muted)]">to</span>
                         <input
                           type="time"
                           value={hour.closeTime || '22:00'}
                           onChange={(e) => updateHour(day.value, 'closeTime', e.target.value)}
-                          className="px-3 py-2 rounded-lg bg-[var(--bg-card)] border border-[var(--glass-border)] text-[var(--text-primary)] text-sm"
+                          className="px-3 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm"
                         />
                       </div>
                     )}
@@ -639,7 +639,7 @@ export default function RestaurantConfigPage() {
                   type="checkbox"
                   checked={newException.isOpen}
                   onChange={(e) => setNewException({ ...newException, isOpen: e.target.checked })}
-                  className="w-5 h-5 rounded border-[var(--glass-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                  className="w-5 h-5 rounded border-[var(--border-color)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                 />
                 <span className="text-sm text-[var(--text-secondary)]">Open on this date</span>
               </label>
@@ -650,14 +650,14 @@ export default function RestaurantConfigPage() {
                     type="time"
                     value={newException.openTime || '09:00'}
                     onChange={(e) => setNewException({ ...newException, openTime: e.target.value })}
-                    className="px-3 py-2 rounded-lg bg-[var(--bg-card)] border border-[var(--glass-border)] text-[var(--text-primary)] text-sm"
+                    className="px-3 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm"
                   />
                   <span className="text-[var(--text-muted)]">to</span>
                   <input
                     type="time"
                     value={newException.closeTime || '22:00'}
                     onChange={(e) => setNewException({ ...newException, closeTime: e.target.value })}
-                    className="px-3 py-2 rounded-lg bg-[var(--bg-card)] border border-[var(--glass-border)] text-[var(--text-primary)] text-sm"
+                    className="px-3 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm"
                   />
                 </div>
               )}
@@ -675,7 +675,7 @@ export default function RestaurantConfigPage() {
                 {exceptionalDates.map((exception) => (
                   <div
                     key={exception.date}
-                    className="flex items-center justify-between p-4 bg-[var(--bg-card)] border border-[var(--glass-border)] rounded-lg"
+                    className="flex items-center justify-between p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl"
                   >
                     <div>
                       <div className="font-medium text-[var(--text-primary)]">
@@ -789,7 +789,7 @@ export default function RestaurantConfigPage() {
                     {floorPlans.map((floorPlan) => (
                       <div
                         key={floorPlan.id}
-                        className="border border-[var(--glass-border)] rounded-xl overflow-hidden"
+                        className="border border-[var(--border-color)] rounded-xl overflow-hidden"
                       >
                         <div className="flex items-center justify-between p-4 bg-[var(--bg-hover)]">
                           <div>

@@ -199,7 +199,7 @@ export default function ReservationFormPage() {
               <Logo size="md" />
               {restaurant && (
                 <>
-                  <div className="h-12 w-px bg-[var(--glass-border)]" />
+                  <div className="h-12 w-px bg-[var(--border-color)]" />
                   <RestaurantLogo 
                     logoUrl={restaurant.logoUrl} 
                     restaurantName={restaurant.name}
@@ -253,7 +253,7 @@ export default function ReservationFormPage() {
             <Logo size="lg" />
             {restaurant && (
               <>
-                <div className="h-16 w-px bg-[var(--glass-border)]" />
+                <div className="h-16 w-px bg-[var(--border-color)]" />
                 <RestaurantLogo 
                   logoUrl={restaurant.logoUrl} 
                   restaurantName={restaurant.name}
@@ -361,7 +361,7 @@ export default function ReservationFormPage() {
                   </div>
 
                   {showFloorPlan && (
-                    <div className="border border-[var(--glass-border)] rounded-xl p-4 bg-[var(--bg-hover)]">
+                    <div className="border border-[var(--border-color)] rounded-xl p-4 bg-[var(--bg-hover)]">
                       <FloorPlanViewer
                         floorPlans={floorPlans}
                         selectedTableId={formData.tableId || null}
@@ -399,7 +399,7 @@ export default function ReservationFormPage() {
                     Preferred Table (Optional)
                   </label>
                   <select
-                    className="w-full px-4 py-3 rounded-lg bg-[var(--bg-card)] border border-[var(--glass-border)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] shadow-sm"
+                    className="w-full px-4 py-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] shadow-sm"
                     value={formData.tableId}
                     onChange={(e) =>
                       setFormData({ ...formData, tableId: e.target.value })
@@ -417,7 +417,7 @@ export default function ReservationFormPage() {
 
               {/* Summary */}
               {formData.selectedDate && formData.selectedTime && (
-                <div className="bg-[var(--bg-hover)] rounded-lg p-4 border border-[var(--glass-border)]">
+                <div className="bg-[var(--bg-hover)] rounded-2xl p-4 border border-[var(--border-color)]">
                   <h3 className="text-sm font-medium text-[var(--text-secondary)] mb-2">Reservation Summary</h3>
                   <div className="space-y-1">
                     <p className="text-[var(--text-primary)]">

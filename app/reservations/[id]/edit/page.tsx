@@ -224,8 +224,8 @@ export default function EditReservationPage() {
                   )}
                 </div>
                 <select
-                  className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg bg-[var(--bg-card)] border text-sm sm:text-base text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] shadow-sm ${
-                    currentTableIsOccupied ? 'border-[var(--warning)]' : 'border-[var(--glass-border)]'
+                  className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-[var(--bg-card)] border text-sm sm:text-base text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] shadow-sm ${
+                    currentTableIsOccupied ? 'border-[var(--warning)]' : 'border-[var(--border-color)]'
                   }`}
                   value={formData.tableId}
                   onChange={(e) => setFormData({ ...formData, tableId: e.target.value })}

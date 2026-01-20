@@ -373,7 +373,7 @@ export default function FloorPlanEditor({
                 type="checkbox"
                 checked={showGrid}
                 onChange={(e) => setShowGrid(e.target.checked)}
-                className="w-4 h-4 rounded border-[var(--glass-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                className="w-4 h-4 rounded border-[var(--border-color)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
               />
               <span className="text-sm text-[var(--text-secondary)]">Snap to Grid</span>
             </label>
@@ -441,7 +441,7 @@ export default function FloorPlanEditor({
                       type="checkbox"
                       checked={selectedElement.hasView || false}
                       onChange={(e) => updateElement(selectedElement.id, { hasView: e.target.checked })}
-                      className="w-4 h-4 rounded border-[var(--glass-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                      className="w-4 h-4 rounded border-[var(--border-color)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                     />
                     <span className="text-sm text-[var(--text-secondary)]">Has View</span>
                   </label>
@@ -500,14 +500,14 @@ export default function FloorPlanEditor({
         >
           <div
             ref={canvasRef}
-            className="relative mx-auto border-2 border-dashed border-[var(--glass-border)] rounded-lg overflow-hidden"
+            className="relative mx-auto border-2 border-dashed border-[var(--border-color)] rounded-2xl overflow-hidden"
             style={{
               width: canvasWidth,
               height: canvasHeight,
               backgroundColor: 'var(--bg-card)',
               backgroundImage: showGrid 
-                ? `linear-gradient(to right, var(--glass-border) 1px, transparent 1px),
-                   linear-gradient(to bottom, var(--glass-border) 1px, transparent 1px)`
+                ? `linear-gradient(to right, var(--border-color) 1px, transparent 1px),
+                   linear-gradient(to bottom, var(--border-color) 1px, transparent 1px)`
                 : 'none',
               backgroundSize: showGrid ? '10px 10px' : 'auto',
             }}
@@ -518,7 +518,7 @@ export default function FloorPlanEditor({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-between items-center mt-4 pt-4 border-t border-[var(--glass-border)]">
+        <div className="flex justify-between items-center mt-4 pt-4 border-t border-[var(--border-color)]">
           <div className="text-sm text-[var(--text-muted)]">
             {elements.filter(e => e.type === 'table').length} tables • {elements.length} elements
           </div>

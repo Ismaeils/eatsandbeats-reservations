@@ -6,10 +6,10 @@
 :root,
 [data-theme="light"] {
   /* Backgrounds */
-  --bg-app: #e0e1dd;
+  --bg-app: #f6f5f4;
   --bg-nav: #ffffff;
   --bg-card: #ffffff;
-  --bg-hover: #f5f5f3;
+  --bg-hover: #eeecea;
 
   /* Brand */
   --color-primary: #706459;
@@ -28,10 +28,9 @@
   --error: #a34a3a;
   --info: #6a7d91;
 
-  /* Glass */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(112, 100, 89, 0.15);
-  --glass-shadow: rgba(31, 31, 29, 0.08);
+  /* Borders & Shadows */
+  --border-color: #e5e3e1;
+  --card-shadow: rgba(31, 31, 29, 0.06);
 }
 
 /* ===== DARK THEME ===== */
@@ -59,10 +58,9 @@
   --error: #B45745;
   --info: #7A8FA3;
 
-  /* Glass */
-  --glass-bg: rgba(36, 35, 34, 0.8);
-  --glass-border: rgba(178, 167, 152, 0.2);
-  --glass-shadow: rgba(0, 0, 0, 0.4);
+  /* Borders & Shadows */
+  --border-color: #3a3937;
+  --card-shadow: rgba(0, 0, 0, 0.2);
 }
 
 * {
@@ -91,43 +89,25 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-[data-theme="light"] body {
-  background-image: 
-    radial-gradient(ellipse at 20% 20%, rgba(178, 167, 152, 0.3) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(149, 141, 132, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(112, 100, 89, 0.08) 0%, transparent 70%);
-  background-attachment: fixed;
-}
+/* Clean solid backgrounds - no gradients */
 
-[data-theme="dark"] body {
-  background-image: 
-    radial-gradient(ellipse at 20% 20%, rgba(112, 100, 89, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(70, 65, 55, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(178, 167, 152, 0.05) 0%, transparent 70%);
-  background-attachment: fixed;
-}
-
-/* Glass Morphism Utility Classes */
+/* Clean Card Utility Classes */
 .glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 4px 24px 0 var(--glass-shadow);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px 0 var(--card-shadow);
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .glass-card {
   background: var(--bg-card);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 4px 24px 0 var(--glass-shadow);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px 0 var(--card-shadow);
   transition: all 0.3s ease;
 }
 
 .glass-card:hover {
-  box-shadow: 0 8px 32px 0 var(--glass-shadow);
+  box-shadow: 0 4px 12px 0 var(--card-shadow);
 }
 
 /* Custom Scrollbar */

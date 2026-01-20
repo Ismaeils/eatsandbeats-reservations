@@ -226,7 +226,7 @@ export default function DashboardPage() {
                       cy="64"
                       r="56"
                       fill="none"
-                      stroke="var(--glass-border)"
+                      stroke="var(--border-color)"
                       strokeWidth="10"
                     />
                     {/* Progress Circle */}
@@ -325,7 +325,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Refresh Button */}
-            <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[var(--glass-border)] flex justify-end">
+            <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[var(--border-color)] flex justify-end">
               <button
                 onClick={fetchDashboardData}
                 className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
@@ -363,7 +363,7 @@ export default function DashboardPage() {
                     className={`bg-[var(--bg-card)] border rounded-lg p-2.5 sm:p-3 lg:p-4 transition-all ${
                       hasNoTable && !isPast 
                         ? 'border-[var(--warning)]/50 bg-[var(--warning)]/5' 
-                        : 'border-[var(--glass-border)]'
+                        : 'border-[var(--border-color)]'
                     } ${
                       isPast ? 'opacity-60' : 'hover:border-[var(--color-primary)]/50 hover:shadow-md'
                     }`}
