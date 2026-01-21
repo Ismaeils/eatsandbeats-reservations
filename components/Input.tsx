@@ -29,7 +29,7 @@ export default function Input({
         </label>
       )}
       <input
-        className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-sm sm:text-base text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] transition-all shadow-sm ${className}`}
+        className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 rounded-[20px] bg-[var(--bg-card)] border border-[var(--border-color)] text-sm sm:text-base text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] transition-all shadow-sm ${className}`}
         onFocus={handleFocus}
         {...props}
       />
