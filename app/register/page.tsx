@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import apiClient from '@/lib/api-client'
@@ -45,6 +45,14 @@ const STEP_DESCRIPTIONS = [
 export default function RegisterPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
+
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      router.replace('/dashboard')
+    }
+  }, [router])
   
   // Step 1: Account
   const [accountData, setAccountData] = useState({

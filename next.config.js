@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', 'images.unsplash.com'],
   },
   // Ensure middleware runs on Node.js runtime, not Edge
   experimental: {

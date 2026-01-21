@@ -1,0 +1,13 @@
+Bugs
+
+1. Correlate the table capacity with the number of people in the reservation
+   - only show the table if the capacity is greater than or equal to the number of people in the reservation
+2. Change the word "Seated" and "Occupied" to "Reserved"
+3. Remove the unnecessary legend in the floor status
+4. Cancellation option of a reservation from the Edit View
+5. When the reservation is cancelled, the table should be freed up and available for new reservations
+6. [BUG] At the guest reservation form, the available tables are not synced with the actual floor status in the restaurant view, 
+it shows all tables as available
+7. [BUG] Settings in the side panel do not persist selection of single pages
+8. Add maxPartySize for each restaurant 
+9. Add maxReservableTables for each restaurant

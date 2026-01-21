@@ -5,6 +5,7 @@ import { z } from 'zod'
 
 const createReservationSchema = z.object({
   invitationToken: z.string().optional(),
+  restaurantId: z.string().optional(), // For public reservations without invitation
   guestName: z.string().min(1, 'Guest name is required'),
   guestContact: z.string().min(1, 'Contact information is required'),
   numberOfPeople: z.number().int().min(1, 'Number of people must be at least 1'),
@@ -48,10 +49,12 @@ export async function POST(request: NextRequest) {
 
       restaurantId = invitation.restaurantId
       invitationId = invitation.id
+    } else if (validatedData.restaurantId) {
+      // Public reservation - no invitation token required
+      restaurantId = validatedData.restaurantId
     } else {
-      // If no token, this should be called from authenticated restaurant user
-      // For now, we'll require token for guest reservations
-      return errorResponse('Invitation token is required', 400)
+      // If no token and no restaurant ID, return error
+      return errorResponse('Restaurant ID or invitation token is required', 400)
     }
 
     const restaurant = await prisma.restaurant.findUnique({
