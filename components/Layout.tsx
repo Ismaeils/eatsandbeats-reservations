@@ -83,10 +83,10 @@ export default function Layout({ children }: LayoutProps) {
         )}
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-h-full overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-full overflow-hidden bg-[var(--bg-app)]">
           {/* Top Bar */}
-          <header className="flex-shrink-0 pt-6 px-6">
-            <div className="flex items-center justify-between">
+          <header className="flex-shrink-0 h-[72px] px-6 bg-transparent flex items-center">
+            <div className="flex items-center justify-between w-full">
               {/* Left side - Mobile menu button */}
               <div className="flex items-center">
                 <button

@@ -62,8 +62,8 @@ export default function Sidebar({ onClose, isMobile = false }: SidebarProps) {
 
   return (
     <aside className={`${isMobile ? 'fixed left-0 top-0 z-40' : ''} h-full w-64 bg-[var(--bg-card)] flex flex-col`}>
-      {/* Logo - aligned left */}
-      <div className="relative flex items-center pt-6 px-6">
+      {/* Logo - aligned left, matching header height */}
+      <div className="relative flex items-center h-[72px] px-6">
         <Link href="/dashboard" className="flex items-center">
           <Logo size="sm" />
         </Link>
@@ -83,7 +83,7 @@ export default function Sidebar({ onClose, isMobile = false }: SidebarProps) {
       </div>
 
       {/* Navigation - positioned 1/3 from top (2/3 up from bottom) */}
-      <div className="flex-1 flex flex-col justify-start pt-[15%] px-6">
+      <div className="flex-1 flex flex-col justify-start pt-6 px-6">
         <nav className="space-y-1">
           {navItems.map((item) => (
             <Link

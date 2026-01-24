@@ -34,7 +34,7 @@ export default function LandingPage() {
             <ThemeToggle />
             <Link
               href="/login"
-              className="px-5 py-2.5 rounded-[20px] border-2 border-[var(--color-primary)] text-[var(--color-primary)] font-medium text-sm hover:bg-[var(--color-primary)] hover:text-white transition-all"
+              className="px-5 py-2 rounded-[20px] border-2 border-[var(--color-primary)] text-[var(--color-primary)] font-medium text-sm hover:bg-[var(--color-primary)] hover:text-white transition-all"
             >
               For Partners
             </Link>

@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import apiClient from '@/lib/api-client'
 import Button from '@/components/Button'
-import Input from '@/components/Input'
 import Card from '@/components/Card'
-import Logo from '@/components/Logo'
 import FloorPlanEditor from '@/components/FloorPlanEditor'
+import Input from '@/components/Input'
+import Logo from '@/components/Logo'
+import apiClient from '@/lib/api-client'
 import { FloorPlanElement } from '@/types/floor-plan'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 const DAYS_OF_WEEK = [
   { value: 0, label: 'Sunday' },
@@ -29,14 +29,14 @@ interface OpeningHour {
 }
 
 const STEP_TITLES = [
-  'Create Account',
+  'Create Restaurant Account',
   'Restaurant Info',
   'Opening Hours',
   'Floor Plan',
 ]
 
 const STEP_DESCRIPTIONS = [
-  'Start by creating your account',
+  'Start by creating an account for your restaurant',
   'Tell us about your restaurant',
   'Set your weekly schedule',
   'Design your restaurant layout',

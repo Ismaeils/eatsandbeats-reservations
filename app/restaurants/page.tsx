@@ -154,10 +154,16 @@ export default function RestaurantsPage() {
             />
           </Link>
           <div className="flex items-center gap-4">
+            <Link
+              href="/"
+              className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            >
+              Home
+            </Link>
             <ThemeToggle />
             <Link
               href="/login"
-              className="px-5 py-2.5 rounded-[20px] border-2 border-[var(--color-primary)] text-[var(--color-primary)] font-medium text-sm hover:bg-[var(--color-primary)] hover:text-white transition-all"
+              className="px-5 py-2 rounded-[20px] border-2 border-[var(--color-primary)] text-[var(--color-primary)] font-medium text-sm hover:bg-[var(--color-primary)] hover:text-white transition-all"
             >
               For Partners
             </Link>
