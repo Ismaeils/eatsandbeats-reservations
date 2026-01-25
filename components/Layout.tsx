@@ -2,9 +2,8 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import Link from 'next/link'
-import Logo from './Logo'
-import RestaurantLogo from './RestaurantLogo'
+import Sidebar from './Sidebar'
+import UserMenu from './UserMenu'
 import ThemeToggle from './ThemeToggle'
 import apiClient from '@/lib/api-client'
 
@@ -21,7 +20,7 @@ export default function Layout({ children }: LayoutProps) {
 
   useEffect(() => {
     const token = localStorage.getItem('token')
-    if (!token && !pathname.startsWith('/login') && !pathname.startsWith('/register')) {
+    if (!token && !pathname.startsWith('/login') && !pathname.startsWith('/register') && !pathname.startsWith('/forgot-password') && !pathname.startsWith('/reservation-form')) {
       router.push('/login')
     } else if (token) {
       // Decode token to get user info (simple implementation)
@@ -53,148 +52,68 @@ export default function Layout({ children }: LayoutProps) {
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    router.push('/login')
-  }
-
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password'
+  const isPublicPage = pathname.startsWith('/reservation-form') || pathname.startsWith('/reservation-success') || pathname.startsWith('/invitations/confirmed')
 
-  if (isAuthPage) {
+  if (isAuthPage || isPublicPage) {
     return <>{children}</>
   }
 
-  const navLinks = [
-    { href: '/dashboard', label: 'Dashboard' },
-    { href: '/reservations', label: 'Reservations' },
-    { href: '/restaurant/config', label: 'Settings' },
-  ]
-
   return (
-    <div className="min-h-screen">
-      {/* Floating Navbar Container */}
-      <div className="sticky top-0 z-50 px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4">
-        <nav className="max-w-7xl mx-auto glass-card rounded-2xl px-4 sm:px-6">
-          <div className="flex justify-between items-center h-14 sm:h-16">
-            {/* Left side: Logos */}
-            <div className="flex items-center gap-3 sm:gap-4">
-              <Link href="/dashboard" className="flex items-center">
-                <Logo size="sm" />
-              </Link>
-              
-              {/* Restaurant Logo - if available (hidden on mobile) */}
-              {restaurant && (
-                <div className="hidden sm:flex items-center gap-3">
-                  <div className="h-8 w-px bg-[var(--border-color)]" />
-                  <RestaurantLogo 
-                    logoUrl={restaurant.logoUrl} 
-                    restaurantName={restaurant.name}
-                    size="sm"
-                  />
-                </div>
-              )}
-            </div>
+    <div className="min-h-screen bg-[var(--bg-app)] p-2 sm:p-3 md:p-4">
+      {/* Elevated App Container */}
+      <div className="min-h-[calc(100vh-16px)] sm:min-h-[calc(100vh-24px)] md:min-h-[calc(100vh-32px)] bg-[var(--bg-card)] rounded-[25px] shadow-elevated overflow-hidden flex">
+        
+        {/* Sidebar - Desktop (always visible, not collapsible) */}
+        <div className="hidden md:block w-64 flex-shrink-0 border-r border-[var(--border-color)]">
+          <Sidebar />
+        </div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`text-[var(--text-secondary)] hover:text-[var(--text-primary)] px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    pathname === link.href ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]' : ''
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              
-              {/* Divider */}
-              <div className="h-6 w-px bg-[var(--border-color)] mx-2" />
-              
-              {/* Theme Toggle */}
-              <ThemeToggle />
-
-              {/* User info & Logout */}
-              {user && (
-                <span className="text-[var(--text-muted)] text-sm hidden lg:block px-2">
-                  {user.email}
-                </span>
-              )}
-              <button
-                onClick={handleLogout}
-                className="text-[var(--text-secondary)] hover:text-[var(--error)] px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                Logout
-              </button>
-            </div>
-
-            {/* Mobile: Theme Toggle + Menu Button */}
-            <div className="flex md:hidden items-center gap-2">
-              <ThemeToggle />
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
-                aria-label="Toggle menu"
-              >
-                {mobileMenuOpen ? (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                ) : (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                )}
-              </button>
+        {/* Mobile Sidebar Overlay */}
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-30 md:hidden">
+            <div 
+              className="absolute inset-0 bg-black/50" 
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <div className="absolute left-0 top-0 h-full">
+              <Sidebar isMobile onClose={() => setMobileMenuOpen(false)} />
             </div>
           </div>
+        )}
 
-          {/* Mobile Menu Dropdown */}
-          {mobileMenuOpen && (
-            <div className="md:hidden py-4 border-t border-[var(--border-color)]">
-              <div className="flex flex-col gap-1">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                      pathname === link.href 
-                        ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]' 
-                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-                
-                {/* Divider */}
-                <div className="h-px bg-[var(--border-color)] my-2" />
-                
-                {/* User info */}
-                {user && (
-                  <div className="px-4 py-2 text-sm text-[var(--text-muted)]">
-                    {user.email}
-                  </div>
-                )}
-                
-                {/* Logout */}
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-h-full overflow-hidden bg-[var(--bg-app)]">
+          {/* Top Bar */}
+          <header className="flex-shrink-0 h-[72px] px-6 bg-transparent flex items-center">
+            <div className="flex items-center justify-between w-full">
+              {/* Left side - Mobile menu button */}
+              <div className="flex items-center">
                 <button
-                  onClick={handleLogout}
-                  className="text-left px-4 py-3 rounded-lg text-sm font-medium text-[var(--error)] hover:bg-[var(--error)]/10 transition-colors"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="md:hidden p-2 rounded-[20px] hover:bg-[var(--bg-hover)] transition-colors"
+                  aria-label="Toggle menu"
                 >
-                  Logout
+                  <svg className="w-6 h-6 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
                 </button>
               </div>
-            </div>
-          )}
-        </nav>
-      </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pb-8 sm:pb-10">
-        {children}
-      </main>
+              {/* Right side - Theme toggle & User menu */}
+              <div className="flex items-center gap-2 sm:gap-4">
+                <ThemeToggle />
+                <UserMenu user={user} restaurant={restaurant} />
+              </div>
+            </div>
+          </header>
+
+          {/* Page Content */}
+          <main className="flex-1 overflow-y-auto p-6 bg-[var(--bg-app)]">
+            {children}
+          </main>
+        </div>
+      </div>
     </div>
   )
 }

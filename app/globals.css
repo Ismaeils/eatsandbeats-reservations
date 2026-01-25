@@ -31,6 +31,11 @@
   /* Borders & Shadows */
   --border-color: #e5e3e1;
   --card-shadow: rgba(31, 31, 29, 0.06);
+  
+  /* Border Radius */
+  --radius-lg: 25px;
+  --radius-md: 20px;
+  --radius-sm: 12px;
 }
 
 /* ===== DARK THEME ===== */
@@ -61,18 +66,35 @@
   /* Borders & Shadows */
   --border-color: #3a3937;
   --card-shadow: rgba(0, 0, 0, 0.2);
+  
+  /* Border Radius */
+  --radius-lg: 25px;
+  --radius-md: 20px;
+  --radius-sm: 12px;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
-  padding: 0;
   margin: 0;
+  padding: 0;
+}
+
+/* Ensure buttons and links are always clickable */
+button,
+a,
+[role="button"] {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 html {
   height: 100%;
   height: 100dvh; /* Dynamic viewport height - accounts for mobile keyboard */
-  overflow: hidden;
 }
 
 body {
@@ -96,6 +118,7 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   box-shadow: 0 1px 3px 0 var(--card-shadow);
+  border-radius: var(--radius-lg);
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -103,11 +126,21 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   box-shadow: 0 1px 3px 0 var(--card-shadow);
+  border-radius: var(--radius-lg);
   transition: all 0.3s ease;
 }
 
 .glass-card:hover {
   box-shadow: 0 4px 12px 0 var(--card-shadow);
+}
+
+/* Elevated shadow for main app container - uniform on all sides */
+.shadow-elevated {
+  box-shadow: 0 0 40px 0 rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .shadow-elevated {
+  box-shadow: 0 0 40px 0 rgba(0, 0, 0, 0.3);
 }
 
 /* Custom Scrollbar */
@@ -174,8 +207,9 @@ body {
   background-color: var(--error);
 }
 
-/* Theme transition */
-* {
+/* Theme transition - only apply to card elements */
+.glass,
+.glass-card {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
