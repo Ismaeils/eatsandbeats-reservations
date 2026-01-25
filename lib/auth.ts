@@ -1,13 +1,18 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { NextRequest } from 'next/server'
+import { UserRole } from '@prisma/client'
 
 const JWT_SECRET: string = process.env.JWT_SECRET || 'your-secret-key'
 const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '7d'
 
+export type UserType = 'admin' | 'restaurant'
+
 export interface JWTPayload {
   userId: string
   email: string
+  userType: UserType
+  role?: UserRole // Optional - only for restaurant users
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -57,3 +62,24 @@ export async function getCurrentUser(request: NextRequest): Promise<JWTPayload |
   return verifyToken(token)
 }
 
+export async function getCurrentAdmin(request: NextRequest): Promise<JWTPayload | null> {
+  const user = await getCurrentUser(request)
+  if (!user) return null
+  if (user.userType !== 'admin') return null
+  return user
+}
+
+export async function getCurrentRestaurantUser(request: NextRequest): Promise<JWTPayload | null> {
+  const user = await getCurrentUser(request)
+  if (!user) return null
+  if (user.userType !== 'restaurant') return null
+  return user
+}
+
+export function isAdmin(payload: JWTPayload): boolean {
+  return payload.userType === 'admin'
+}
+
+export function isRestaurant(payload: JWTPayload): boolean {
+  return payload.userType === 'restaurant'
+}

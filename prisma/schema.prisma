@@ -10,11 +10,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  RESTAURANT
+  ADMIN
+  OWNER
+  MANAGER
+  STAFF
+}
+
 model RestaurantUser {
   id        String   @id @default(cuid())
   email     String   @unique
   password  String
   name      String
+  role      UserRole @default(RESTAURANT)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
@@ -23,48 +32,48 @@ model RestaurantUser {
   @@map("restaurant_users")
 }
 
+model AdminUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("admin_users")
+}
+
 model Restaurant {
-  id                 String   @id @default(cuid())
-  userId             String   @unique
-  name               String
-  logoUrl            String?
-  address            String
-  reservationDeposit Float    @default(0)
-  averageSeatingTime Int      @default(60) // in minutes
-  reservationDuration Int     @default(120) // default reservation duration in minutes
-  slotGranularity    Int      @default(15) // time slot granularity in minutes
-  tableLayout        String[] // Array of table identifiers like ["T1", "T2", "TB01"]
-  cuisines           String[] // Array of cuisine types
-  hasVisualLayout    Boolean  @default(false) // Whether restaurant uses visual floor plan
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                        String   @id @default(cuid())
+  userId                    String   @unique
+  name                      String
+  logoUrl                   String?
+  address                   String
+  reservationDeposit        Float    @default(0)
+  averageSeatingTime        Int      @default(60) // in minutes
+  reservationDuration       Int      @default(120) // default reservation duration in minutes
+  slotGranularity           Int      @default(15) // time slot granularity in minutes
+  maxSimultaneousReservations Int    @default(10) // max reservations at same time slot
+  autoConfirmReservations   Boolean  @default(false) // Auto-confirm or require manual approval
+  cuisines                  String[] // Array of cuisine types
+  isPublished               Boolean  @default(false) // Whether restaurant is visible to public
+  country                   String   @default("UAE") // Restaurant country
+  language                  String   @default("en")  // Restaurant language
+  currency                  String   @default("AED") // Restaurant currency
+  description               String?  // Restaurant description
+  photos                    String[] // Up to 5 photo URLs for listing
+  phone                     String?  // Contact phone number
+  email                     String?  // Contact email
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
   
   user               RestaurantUser @relation(fields: [userId], references: [id], onDelete: Cascade)
   reservations       Reservation[]
   invitations        ReservationInvitation[]
   openingHours       OpeningHours[]
   exceptionalDates   ExceptionalDate[]
-  floorPlans         FloorPlan[]
   
   @@map("restaurants")
-}
-
-// Visual floor plan for restaurant layout
-model FloorPlan {
-  id           String   @id @default(cuid())
-  restaurantId String
-  name         String   // e.g., "Ground Floor", "Rooftop", "Patio"
-  order        Int      @default(0) // Display order for multiple floors
-  width        Int      @default(800) // Canvas width in pixels
-  height       Int      @default(600) // Canvas height in pixels
-  elements     Json     // JSON array of floor plan elements (tables, dividers, decorations)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  
-  @@map("floor_plans")
 }
 
 // Regular opening hours for each day of the week
@@ -123,13 +132,13 @@ model Reservation {
   id                String   @id @default(cuid())
   restaurantId      String
   invitationId      String?  @unique
+  confirmationCode  String?  @unique
   guestName         String
   guestContact      String   // phone or email
   numberOfPeople    Int
   timeFrom          DateTime
   timeTo            DateTime
-  tableId           String?  // Table identifier from tableLayout
-  status            ReservationStatus @default(CONFIRMED)
+  status            ReservationStatus @default(PENDING)
   depositPaid       Boolean  @default(false)
   depositAmount     Float
   paymentGateway    String?  // e.g., "stripe", "paymob"
@@ -162,4 +171,26 @@ enum ReservationStatus {
   SEATED
   COMPLETED
   CANCELLED
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+model RestaurantRequest {
+  id               String        @id @default(cuid())
+  email            String
+  contactName      String
+  phone            String
+  description      String
+  status           RequestStatus @default(PENDING)
+  approvalCode     String?       @unique
+  approvalCodeUsed Boolean       @default(false)
+  declineReason    String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  @@map("restaurant_requests")
 }

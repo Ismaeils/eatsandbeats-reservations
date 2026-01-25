@@ -2,7 +2,22 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/api-response'
-import { updateRestaurantConfigSchema } from '@/lib/validations'
+import { z } from 'zod'
+
+const updateRestaurantConfigSchema = z.object({
+  logoUrl: z.string().optional(),
+  reservationDeposit: z.number().min(0).optional(),
+  averageSeatingTime: z.number().min(15).max(300).optional(),
+  reservationDuration: z.number().min(15).max(480).optional(),
+  slotGranularity: z.number().min(5).max(60).optional(),
+  maxSimultaneousReservations: z.number().min(1).max(1000).optional(),
+  autoConfirmReservations: z.boolean().optional(),
+  cuisines: z.array(z.string()).optional(),
+  isPublished: z.boolean().optional(),
+  country: z.string().optional(),
+  language: z.string().optional(),
+  currency: z.string().optional(),
+})
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -39,11 +54,26 @@ export async function PATCH(request: NextRequest) {
         ...(validatedData.slotGranularity !== undefined && {
           slotGranularity: validatedData.slotGranularity,
         }),
-        ...(validatedData.tableLayout !== undefined && {
-          tableLayout: validatedData.tableLayout,
+        ...(validatedData.maxSimultaneousReservations !== undefined && {
+          maxSimultaneousReservations: validatedData.maxSimultaneousReservations,
+        }),
+        ...(validatedData.autoConfirmReservations !== undefined && {
+          autoConfirmReservations: validatedData.autoConfirmReservations,
         }),
         ...(validatedData.cuisines !== undefined && {
           cuisines: validatedData.cuisines,
+        }),
+        ...(validatedData.isPublished !== undefined && {
+          isPublished: validatedData.isPublished,
+        }),
+        ...(validatedData.country !== undefined && {
+          country: validatedData.country,
+        }),
+        ...(validatedData.language !== undefined && {
+          language: validatedData.language,
+        }),
+        ...(validatedData.currency !== undefined && {
+          currency: validatedData.currency,
         }),
       },
     })
@@ -57,4 +87,3 @@ export async function PATCH(request: NextRequest) {
     return errorResponse('Failed to update configuration', 500)
   }
 }
-

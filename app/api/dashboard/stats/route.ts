@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
     // Check setup status
     const hasOpeningHours = restaurant.openingHours.length > 0 && 
       restaurant.openingHours.some((h) => h.isOpen)
-    const hasTables = restaurant.tableLayout.length > 0
 
     const now = new Date()
     const todayStart = startOfDay(now)
@@ -61,31 +60,6 @@ export async function GET(request: NextRequest) {
       }),
     ])
 
-    // Get current reservations (today)
-    const currentReservations = await prisma.reservation.findMany({
-      where: {
-        restaurantId: restaurant.id,
-        timeFrom: { lte: todayEnd },
-        timeTo: { gte: todayStart },
-        status: { in: ['CONFIRMED', 'SEATED'] },
-      },
-      select: {
-        id: true,
-        tableId: true,
-        timeFrom: true,
-        timeTo: true,
-        status: true,
-      },
-    })
-
-    // Calculate table occupancy
-    const occupiedTables = new Set(
-      currentReservations.map((r: any) => r.tableId).filter(Boolean)
-    )
-    const availableTables = restaurant.tableLayout.filter(
-      (table: string) => !occupiedTables.has(table)
-    )
-
     return successResponse({
       reservations: {
         today: todayCount,
@@ -93,18 +67,9 @@ export async function GET(request: NextRequest) {
         month: monthCount,
         total: totalCount,
       },
-      tables: {
-        total: restaurant.tableLayout.length,
-        occupied: occupiedTables.size,
-        available: availableTables.length,
-        occupiedTableIds: Array.from(occupiedTables),
-        availableTableIds: availableTables,
-      },
-      currentReservations: currentReservations,
       setup: {
         hasOpeningHours,
-        hasTables,
-        isComplete: hasOpeningHours && hasTables,
+        isComplete: hasOpeningHours,
       },
     })
   } catch (error) {
@@ -112,4 +77,3 @@ export async function GET(request: NextRequest) {
     return errorResponse('Failed to fetch dashboard stats', 500)
   }
 }
-

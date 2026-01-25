@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
     const resetToken = generateToken({
       userId: user.id,
       email: user.email,
+      userType: 'restaurant',
     })
 
     // TODO: Send email with reset link

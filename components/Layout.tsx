@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Sidebar from './Sidebar'
 import UserMenu from './UserMenu'
 import ThemeToggle from './ThemeToggle'
+import NotificationBell from './NotificationBell'
 import apiClient from '@/lib/api-client'
 
 interface LayoutProps {
@@ -100,9 +101,10 @@ export default function Layout({ children }: LayoutProps) {
                 </button>
               </div>
 
-              {/* Right side - Theme toggle & User menu */}
+              {/* Right side - Notifications, Theme toggle & User menu */}
               <div className="flex items-center gap-2 sm:gap-4">
                 <ThemeToggle />
+                <NotificationBell />
                 <UserMenu user={user} restaurant={restaurant} />
               </div>
             </div>

@@ -8,12 +8,21 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search') || ''
     const cuisine = searchParams.get('cuisine') || ''
+    const country = searchParams.get('country') || ''
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '12')
     const skip = (page - 1) * limit
 
     // Build the where clause
-    const where: any = {}
+    const where: any = {
+      // Only show published restaurants
+      isPublished: true,
+    }
+
+    // Filter by country
+    if (country) {
+      where.country = country
+    }
 
     // Search by restaurant name
     if (search) {
@@ -40,6 +49,7 @@ export async function GET(request: NextRequest) {
         id: true,
         name: true,
         logoUrl: true,
+        photos: true,
         address: true,
         cuisines: true,
         reservationDeposit: true,
@@ -59,8 +69,13 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Get all unique cuisines for filters
+    // Get all unique cuisines for filters (only from published restaurants in the selected country)
+    const cuisineWhere: any = { isPublished: true }
+    if (country) {
+      cuisineWhere.country = country
+    }
     const allCuisines = await prisma.restaurant.findMany({
+      where: cuisineWhere,
       select: {
         cuisines: true,
       },
@@ -73,6 +88,7 @@ export async function GET(request: NextRequest) {
         id: r.id,
         name: r.name,
         logoUrl: r.logoUrl,
+        photos: r.photos || [],
         address: r.address,
         cuisines: r.cuisines,
         // Extract district from address (simplified - takes the part after the first comma)

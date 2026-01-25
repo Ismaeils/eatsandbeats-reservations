@@ -50,14 +50,6 @@ export async function POST(request: NextRequest) {
       return errorResponse('Restaurant not found', 404)
     }
 
-    // Check if restaurant has tables configured
-    if (!restaurant.tableLayout || restaurant.tableLayout.length === 0) {
-      return errorResponse(
-        'Cannot send invitations until you have configured tables in your Floor Plan. Go to Settings → Floor Plan to add tables.',
-        400
-      )
-    }
-
     // Check if restaurant has opening hours configured
     const openDays = restaurant.openingHours.filter((h) => h.isOpen)
     if (restaurant.openingHours.length === 0 || openDays.length === 0) {

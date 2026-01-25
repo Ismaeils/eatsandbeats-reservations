@@ -8,13 +8,14 @@ import Input from '@/components/Input'
 import Card from '@/components/Card'
 import Layout from '@/components/Layout'
 import ManualReservationDialog from '@/components/ManualReservationDialog'
-import { format } from 'date-fns'
+import { format, isToday } from 'date-fns'
 
 export default function ReservationsPage() {
   const [reservations, setReservations] = useState<any[]>([])
   const [filteredReservations, setFilteredReservations] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [restaurant, setRestaurant] = useState<any>(null)
@@ -52,6 +53,50 @@ export default function ReservationsPage() {
       }
     } catch (err) {
       // Silent fail
+    }
+  }
+
+  const handleApprove = async (id: string) => {
+    try {
+      setActionLoading(id)
+      const response = await apiClient.post(`/reservations/${id}/approve`) as any
+      if (response?.success) {
+        fetchReservations()
+      }
+    } catch (err: any) {
+      setError(err.error || 'Failed to approve reservation')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleCancel = async (id: string) => {
+    if (!confirm('Are you sure you want to cancel this reservation?')) return
+    
+    try {
+      setActionLoading(id)
+      const response = await apiClient.patch(`/reservations/${id}`, { status: 'CANCELLED' }) as any
+      if (response?.success) {
+        fetchReservations()
+      }
+    } catch (err: any) {
+      setError(err.error || 'Failed to cancel reservation')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleMarkShowedUp = async (id: string) => {
+    try {
+      setActionLoading(id)
+      const response = await apiClient.patch(`/reservations/${id}`, { status: 'SEATED' }) as any
+      if (response?.success) {
+        fetchReservations()
+      }
+    } catch (err: any) {
+      setError(err.error || 'Failed to update reservation')
+    } finally {
+      setActionLoading(null)
     }
   }
 
@@ -101,19 +146,25 @@ export default function ReservationsPage() {
       )
     }
 
-    const statusColors: Record<string, string> = {
-      CONFIRMED: 'bg-[var(--success)]/20 text-[var(--success)]',
-      PENDING: 'bg-[var(--warning)]/20 text-[var(--warning)]',
-      CANCELLED: 'bg-[var(--error)]/20 text-[var(--error)]',
-      SEATED: 'bg-[var(--info)]/20 text-[var(--info)]',
-      COMPLETED: 'bg-[var(--text-muted)]/20 text-[var(--text-muted)]',
+    const statusConfig: Record<string, { color: string; label: string }> = {
+      CONFIRMED: { color: 'bg-[var(--success)]/20 text-[var(--success)]', label: 'Confirmed' },
+      PENDING: { color: 'bg-[var(--warning)]/20 text-[var(--warning)]', label: 'Pending Approval' },
+      CANCELLED: { color: 'bg-[var(--error)]/20 text-[var(--error)]', label: 'Cancelled' },
+      SEATED: { color: 'bg-[var(--info)]/20 text-[var(--info)]', label: 'Showed Up' },
+      COMPLETED: { color: 'bg-[var(--text-muted)]/20 text-[var(--text-muted)]', label: 'Completed' },
     }
 
+    const config = statusConfig[reservation.status] || { color: '', label: reservation.status }
+
     return (
-      <span className={`px-2 py-1 rounded-full text-xs ${statusColors[reservation.status] || ''}`}>
-        {reservation.status}
+      <span className={`px-2 py-1 rounded-full text-xs ${config.color}`}>
+        {config.label}
       </span>
     )
+  }
+
+  const isReservationToday = (timeFrom: string) => {
+    return isToday(new Date(timeFrom))
   }
 
   if (isLoading) {
@@ -189,8 +240,9 @@ export default function ReservationsPage() {
                 <option value="all">All</option>
                 <option value="upcoming">Upcoming</option>
                 <option value="past">Past</option>
+                <option value="PENDING">Pending Approval</option>
                 <option value="CONFIRMED">Confirmed</option>
-                <option value="PENDING">Pending</option>
+                <option value="SEATED">Showed Up</option>
                 <option value="CANCELLED">Cancelled</option>
               </select>
             </div>
@@ -215,19 +267,25 @@ export default function ReservationsPage() {
             <div className="space-y-2 sm:space-y-3">
               {filteredReservations.map((reservation) => {
                 const isPast = isPastReservation(reservation.timeTo)
-                const hasNoTable = !reservation.tableId
+                const isTodayReservation = isReservationToday(reservation.timeFrom)
+                const isActionLoading = actionLoading === reservation.id
+                
+                const needsAction = reservation.status === 'PENDING' && !isPast
                 
                 return (
                   <div
                     key={reservation.id}
-                    className={`bg-[var(--bg-card)] border rounded-lg p-2.5 sm:p-3 lg:p-4 transition-all ${
-                      hasNoTable && !isPast 
-                        ? 'border-[var(--warning)]/50 bg-[var(--warning)]/5' 
-                        : 'border-[var(--border-color)]'
-                    } ${
+                    className={`relative bg-[var(--bg-card)] border rounded-lg p-2.5 sm:p-3 lg:p-4 transition-all border-[var(--border-color)] ${
                       isPast ? 'opacity-70' : 'hover:border-[var(--color-primary)]/50 hover:shadow-md'
-                    }`}
+                    } ${needsAction ? 'border-l-4 border-l-[var(--warning)]' : ''}`}
                   >
+                    {/* Pulsing indicator for pending reservations */}
+                    {needsAction && (
+                      <span className="absolute top-3 right-3 flex h-3 w-3">
+                        <span className="animate-ping absolute h-full w-full rounded-full bg-[var(--warning)] opacity-75"></span>
+                        <span className="relative rounded-full h-3 w-3 bg-[var(--warning)]"></span>
+                      </span>
+                    )}
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1 flex-wrap">
@@ -235,32 +293,52 @@ export default function ReservationsPage() {
                             {reservation.guestName}
                           </h3>
                           {getStatusBadge(reservation)}
-                          {hasNoTable && !isPast && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-[var(--warning)]/20 text-[var(--warning)] border border-[var(--warning)]/30">
-                              <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                              </svg>
-                              No table
-                            </span>
-                          )}
                         </div>
                         <p className="text-[var(--text-secondary)] text-xs sm:text-sm">
                           {reservation.guestContact}
                         </p>
                         <p className="text-[var(--text-secondary)] text-xs sm:text-sm">
-                          {reservation.numberOfPeople} ppl • {reservation.tableId || (
-                            <span className="text-[var(--warning)]">TBD</span>
-                          )}
+                          {reservation.numberOfPeople} {reservation.numberOfPeople === 1 ? 'guest' : 'guests'}
                         </p>
                         <p className="text-[var(--text-muted)] text-[11px] sm:text-xs lg:text-sm mt-0.5 sm:mt-1">
                           {format(new Date(reservation.timeFrom), 'MMM d, h:mm a')} - {format(new Date(reservation.timeTo), 'h:mm a')}
                         </p>
+                        {reservation.confirmationCode && (
+                          <p className="text-[var(--color-primary)] text-[11px] sm:text-xs font-mono mt-1">
+                            Code: {reservation.confirmationCode.slice(0, 8).toUpperCase()}
+                          </p>
+                        )}
                       </div>
-                      <div className="flex gap-2 shrink-0">
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2 shrink-0 justify-end">
+                        {/* Approve button - for PENDING reservations */}
+                        {reservation.status === 'PENDING' && !isPast && (
+                          <Button
+                            variant="primary"
+                            className="text-xs px-2 py-1 sm:px-3 sm:py-1.5 !bg-[var(--success)] hover:!bg-[var(--success)]/80"
+                            onClick={() => handleApprove(reservation.id)}
+                            disabled={isActionLoading}
+                          >
+                            {isActionLoading ? '...' : 'Approve'}
+                          </Button>
+                        )}
+                        
+                        {/* Mark Showed Up button - for CONFIRMED reservations today */}
+                        {reservation.status === 'CONFIRMED' && isTodayReservation && !isPast && (
+                          <Button
+                            variant="outline"
+                            className="text-xs px-2 py-1 sm:px-3 sm:py-1.5 !border-[var(--info)] !text-[var(--info)] hover:!bg-[var(--info)]/10"
+                            onClick={() => handleMarkShowedUp(reservation.id)}
+                            disabled={isActionLoading}
+                          >
+                            {isActionLoading ? '...' : 'Showed Up'}
+                          </Button>
+                        )}
+                        
+                        {/* Edit button */}
                         {!isPast && (
                           <Link href={`/reservations/${reservation.id}/edit`}>
-                            <Button variant={hasNoTable ? 'primary' : 'outline'} className="text-xs px-2 py-1 sm:px-3 sm:py-1.5">
-                              {hasNoTable ? 'Assign' : 'Edit'}
+                            <Button variant="outline" className="text-xs px-2 py-1 sm:px-3 sm:py-1.5">
+                              Edit
                             </Button>
                           </Link>
                         )}

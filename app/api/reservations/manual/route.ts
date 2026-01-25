@@ -2,15 +2,26 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/api-response'
+import { sendReservationConfirmedEmail } from '@/lib/email'
 import { z } from 'zod'
+import { format } from 'date-fns'
+
+// Generate a unique confirmation code
+function generateConfirmationCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let code = ''
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return code
+}
 
 const manualReservationSchema = z.object({
   guestName: z.string().min(2, 'Guest name must be at least 2 characters'),
   guestContact: z.string().min(5, 'Contact info must be at least 5 characters'),
-  numberOfPeople: z.number().int().min(1).max(50),
+  numberOfPeople: z.number().int().min(1).max(100),
   timeFrom: z.string().datetime(),
   timeTo: z.string().datetime(),
-  tableId: z.string().optional().nullable(),
 })
 
 // POST - Create a manual reservation (by employee)
@@ -36,14 +47,6 @@ export async function POST(request: NextRequest) {
       return errorResponse('Restaurant not found', 404)
     }
 
-    // Check if restaurant is properly set up
-    if (!restaurant.tableLayout || restaurant.tableLayout.length === 0) {
-      return errorResponse(
-        'Cannot create reservations until you have configured tables in your Floor Plan.',
-        400
-      )
-    }
-
     const openDays = restaurant.openingHours.filter((h) => h.isOpen)
     if (restaurant.openingHours.length === 0 || openDays.length === 0) {
       return errorResponse(
@@ -60,84 +63,55 @@ export async function POST(request: NextRequest) {
       return errorResponse('End time must be after start time', 400)
     }
 
-    // Check table availability if a specific table is selected
-    let assignedTableId = validatedData.tableId
+    // Check maxSimultaneousReservations capacity
+    const overlappingCount = await prisma.reservation.count({
+      where: {
+        restaurantId: restaurant.id,
+        status: { in: ['CONFIRMED', 'PENDING', 'SEATED'] },
+        timeFrom: { lt: timeTo },
+        timeTo: { gt: timeFrom },
+      },
+    })
 
-    if (assignedTableId) {
-      // Check if table exists
-      if (!restaurant.tableLayout.includes(assignedTableId)) {
-        return errorResponse(`Table ${assignedTableId} does not exist`, 400)
-      }
-
-      // Check if table is available at the requested time
-      const conflictingReservation = await prisma.reservation.findFirst({
-        where: {
-          restaurantId: restaurant.id,
-          tableId: assignedTableId,
-          status: { in: ['CONFIRMED', 'PENDING', 'SEATED'] },
-          AND: [
-            { timeFrom: { lt: timeTo } },
-            { timeTo: { gt: timeFrom } },
-          ],
-        },
-      })
-
-      if (conflictingReservation) {
-        return errorResponse(
-          `Table ${assignedTableId} is not available at the requested time. Please choose a different table.`,
-          400
-        )
-      }
-    } else {
-      // Auto-assign a table
-      const conflictingReservations = await prisma.reservation.findMany({
-        where: {
-          restaurantId: restaurant.id,
-          tableId: { in: restaurant.tableLayout },
-          status: { in: ['CONFIRMED', 'PENDING', 'SEATED'] },
-          AND: [
-            { timeFrom: { lt: timeTo } },
-            { timeTo: { gt: timeFrom } },
-          ],
-        },
-        select: { tableId: true },
-      })
-
-      const occupiedTableIds = new Set(conflictingReservations.map((r) => r.tableId))
-      const availableTable = restaurant.tableLayout.find(
-        (tableId) => !occupiedTableIds.has(tableId)
-      )
-
-      if (availableTable) {
-        assignedTableId = availableTable
-      }
-      // If no table is available, leave as null (TBD)
+    if (overlappingCount >= restaurant.maxSimultaneousReservations) {
+      return errorResponse('This time slot is fully booked. Please choose a different time.', 400)
     }
 
-    // Create the reservation
+    // Generate confirmation code
+    const confirmationCode = generateConfirmationCode()
+
+    // Create the reservation (manual reservations are always confirmed)
     const reservation = await prisma.reservation.create({
       data: {
         restaurantId: restaurant.id,
+        confirmationCode,
         guestName: validatedData.guestName,
         guestContact: validatedData.guestContact,
         numberOfPeople: validatedData.numberOfPeople,
         timeFrom,
         timeTo,
-        tableId: assignedTableId,
         status: 'CONFIRMED',
         depositAmount: restaurant.reservationDeposit,
-        depositPaid: false, // Manual reservations can be marked as paid later
+        depositPaid: false,
       },
     })
 
+    // Send confirmation email if guest contact is an email
+    const isEmailContact = validatedData.guestContact.includes('@')
+    if (isEmailContact) {
+      await sendReservationConfirmedEmail({
+        guestName: validatedData.guestName,
+        guestEmail: validatedData.guestContact,
+        restaurantName: restaurant.name,
+        confirmationCode,
+        date: format(timeFrom, 'EEEE, MMMM d, yyyy'),
+        time: format(timeFrom, 'h:mm a'),
+        numberOfPeople: validatedData.numberOfPeople,
+      })
+    }
+
     return successResponse(
-      {
-        ...reservation,
-        tableAssigned: !!assignedTableId,
-        message: assignedTableId 
-          ? `Reservation created and assigned to table ${assignedTableId}`
-          : 'Reservation created. No tables available at this time - please assign a table manually.',
-      },
+      { ...reservation, confirmationCode },
       'Reservation created successfully'
     )
   } catch (error: any) {
