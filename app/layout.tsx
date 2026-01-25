@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Cormorant_Garamond, Nunito_Sans } from 'next/font/google'
 import { ThemeProvider } from '@/contexts/ThemeContext'
+import { LocaleProvider } from '@/contexts/LocaleContext'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({ 
@@ -29,7 +30,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${cormorant.variable} ${nunito.variable} font-sans`}>
         <ThemeProvider>
-          {children}
+          <LocaleProvider>
+            {children}
+          </LocaleProvider>
         </ThemeProvider>
       </body>
     </html>

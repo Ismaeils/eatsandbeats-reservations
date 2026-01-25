@@ -21,14 +21,6 @@ export async function GET(
             },
           },
         },
-        floorPlans: {
-          where: {
-            isActive: true,
-          },
-          orderBy: {
-            order: 'asc',
-          },
-        },
       },
     })
 
@@ -36,17 +28,25 @@ export async function GET(
       return errorResponse('Restaurant not found', 404)
     }
 
+    // Check if restaurant is published
+    if (!restaurant.isPublished) {
+      return errorResponse('Restaurant not available', 404)
+    }
+
     return successResponse({
       id: restaurant.id,
       name: restaurant.name,
       logoUrl: restaurant.logoUrl,
+      description: restaurant.description,
+      photos: restaurant.photos || [],
       address: restaurant.address,
       cuisines: restaurant.cuisines,
+      phone: restaurant.phone,
+      email: restaurant.email,
       reservationDeposit: restaurant.reservationDeposit,
+      currency: restaurant.currency,
       reservationDuration: restaurant.reservationDuration || 120,
       slotGranularity: restaurant.slotGranularity || 15,
-      tableLayout: restaurant.tableLayout,
-      hasVisualLayout: restaurant.hasVisualLayout,
       openingHours: restaurant.openingHours.map(h => ({
         dayOfWeek: h.dayOfWeek,
         isOpen: h.isOpen,
@@ -59,14 +59,6 @@ export async function GET(
         openTime: d.openTime,
         closeTime: d.closeTime,
         note: d.note,
-      })),
-      floorPlans: restaurant.floorPlans.map(fp => ({
-        id: fp.id,
-        name: fp.name,
-        order: fp.order,
-        width: fp.width,
-        height: fp.height,
-        elements: fp.elements,
       })),
     })
   } catch (error: any) {

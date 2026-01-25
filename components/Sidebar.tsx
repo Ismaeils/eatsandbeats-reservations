@@ -54,7 +54,7 @@ export default function Sidebar({ onClose, isMobile = false }: SidebarProps) {
     { href: '/restaurant/settings/general', label: 'General' },
     { href: '/restaurant/settings/hours', label: 'Hours' },
     { href: '/restaurant/settings/exceptions', label: 'Exceptions' },
-    { href: '/restaurant/settings/floor-plan', label: 'Floor Plan' },
+    { href: '/restaurant/settings/public-listing', label: 'Public Listing' },
   ]
 
   const isActive = (href: string) => pathname === href

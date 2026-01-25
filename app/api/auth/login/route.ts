@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = loginSchema.parse(body)
 
-    // Find user
+    // Find user in RestaurantUser table
     const user = await prisma.restaurantUser.findUnique({
       where: { email: validatedData.email },
       include: { restaurant: true },
@@ -25,10 +25,12 @@ export async function POST(request: NextRequest) {
       return errorResponse('Invalid email or password', 401)
     }
 
-    // Generate JWT token
+    // Generate JWT token with userType
     const token = generateToken({
       userId: user.id,
       email: user.email,
+      userType: 'restaurant',
+      role: user.role,
     })
 
     return successResponse(

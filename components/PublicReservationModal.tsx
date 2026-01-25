@@ -1,21 +1,17 @@
 'use client'
 
 import Button from '@/components/Button'
-import FloorPlanViewer from '@/components/FloorPlanViewer'
 import Input from '@/components/Input'
 import RestaurantLogo from '@/components/RestaurantLogo'
 import TimeSlotPicker from '@/components/TimeSlotPicker'
-import { FloorPlanElement } from '@/types/floor-plan'
 import { addMinutes, format } from 'date-fns'
 import { useEffect, useState } from 'react'
 
-interface FloorPlan {
-  id: string
-  name: string
-  order: number
-  width: number
-  height: number
-  elements: FloorPlanElement[]
+// Currency symbol mapping
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  AED: 'AED',
+  USD: '$',
+  EUR: '€',
 }
 
 interface Restaurant {
@@ -26,8 +22,8 @@ interface Restaurant {
   address: string
   reservationDuration: number
   slotGranularity: number
-  tableLayout: string[]
-  hasVisualLayout: boolean
+  reservationDeposit?: number
+  currency?: string
   openingHours: {
     dayOfWeek: number
     isOpen: boolean
@@ -41,7 +37,6 @@ interface Restaurant {
     closeTime: string | null
     note?: string
   }[]
-  floorPlans: FloorPlan[]
 }
 
 interface PublicReservationModalProps {
@@ -57,9 +52,7 @@ export default function PublicReservationModal({ restaurant, isOpen, onClose }: 
     numberOfPeople: '2',
     selectedDate: null as Date | null,
     selectedTime: null as string | null,
-    tableId: '',
   })
-  const [showFloorPlan, setShowFloorPlan] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
@@ -73,11 +66,9 @@ export default function PublicReservationModal({ restaurant, isOpen, onClose }: 
         numberOfPeople: '2',
         selectedDate: null,
         selectedTime: null,
-        tableId: '',
       })
       setError('')
       setSuccess(false)
-      setShowFloorPlan(false)
     }
   }, [isOpen])
 
@@ -92,10 +83,6 @@ export default function PublicReservationModal({ restaurant, isOpen, onClose }: 
       document.body.style.overflow = 'unset'
     }
   }, [isOpen])
-
-  const handleTableSelect = (tableId: string | null) => {
-    setFormData({ ...formData, tableId: tableId || '' })
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -125,7 +112,6 @@ export default function PublicReservationModal({ restaurant, isOpen, onClose }: 
         numberOfPeople: parseInt(formData.numberOfPeople),
         timeFrom: timeFrom.toISOString(),
         timeTo: timeTo.toISOString(),
-        tableId: formData.tableId || undefined,
       }
 
       const response = await fetch('/api/reservations/create', {
@@ -267,7 +253,7 @@ export default function PublicReservationModal({ restaurant, isOpen, onClose }: 
                 label="Number of Guests"
                 type="number"
                 min="1"
-                max="20"
+                max="100"
                 value={formData.numberOfPeople}
                 onChange={(e) => setFormData({ ...formData, numberOfPeople: e.target.value })}
                 required
@@ -285,60 +271,16 @@ export default function PublicReservationModal({ restaurant, isOpen, onClose }: 
                 slotGranularity={restaurant.slotGranularity}
               />
 
-              {/* Table Selection */}
-              {restaurant.hasVisualLayout && restaurant.floorPlans.length > 0 ? (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-sm font-medium text-[var(--text-secondary)]">
-                      Choose Your Table (Optional)
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowFloorPlan(!showFloorPlan)}
-                      className="text-sm text-[var(--color-primary)] hover:underline flex items-center gap-1"
-                    >
-                      {showFloorPlan ? 'Hide Floor Plan' : 'View Floor Plan'}
-                    </button>
-                  </div>
-
-                  {showFloorPlan && (
-                    <div className="border border-[var(--border-color)] rounded-[20px] p-4 bg-[var(--bg-hover)]">
-                      <FloorPlanViewer
-                        floorPlans={restaurant.floorPlans}
-                        selectedTableId={formData.tableId || null}
-                        onSelectTable={handleTableSelect}
-                        occupiedTableIds={[]}
-                      />
-                    </div>
-                  )}
-
-                  {formData.tableId && (
-                    <div className="flex items-center justify-between p-3 bg-[var(--success)]/10 border border-[var(--success)]/30 rounded-[20px]">
-                      <span className="text-sm text-[var(--text-primary)]">
-                        Selected Table: <strong>{formData.tableId}</strong>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleTableSelect(null)}
-                        className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : null}
-
               {/* Summary */}
               {formData.selectedDate && formData.selectedTime && (
                 <div className="bg-[var(--bg-hover)] rounded-[20px] p-4 border border-[var(--border-color)]">
                   <h3 className="text-sm font-medium text-[var(--text-secondary)] mb-2">Reservation Summary</h3>
                   <div className="space-y-1 text-sm">
                     <p className="text-[var(--text-primary)]">
-                      📅 {format(formData.selectedDate, 'EEEE, MMMM d, yyyy')}
+                      {format(formData.selectedDate, 'EEEE, MMMM d, yyyy')}
                     </p>
                     <p className="text-[var(--color-primary)] font-medium">
-                      🕐 {(() => {
+                      {(() => {
                         const [h, m] = formData.selectedTime.split(':').map(Number)
                         const start = new Date()
                         start.setHours(h, m)
@@ -347,11 +289,11 @@ export default function PublicReservationModal({ restaurant, isOpen, onClose }: 
                       })()}
                     </p>
                     <p className="text-[var(--text-secondary)]">
-                      👥 {formData.numberOfPeople} {parseInt(formData.numberOfPeople) === 1 ? 'guest' : 'guests'}
+                      {formData.numberOfPeople} {parseInt(formData.numberOfPeople) === 1 ? 'guest' : 'guests'}
                     </p>
-                    {formData.tableId && (
-                      <p className="text-[var(--text-secondary)]">
-                        🪑 Table {formData.tableId}
+                    {restaurant.reservationDeposit && restaurant.reservationDeposit > 0 && (
+                      <p className="text-[var(--warning)] font-medium mt-2">
+                        Deposit Required: {CURRENCY_SYMBOLS[restaurant.currency || 'AED'] || restaurant.currency} {restaurant.reservationDeposit.toFixed(2)}
                       </p>
                     )}
                   </div>

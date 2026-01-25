@@ -33,7 +33,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-4">
             <ThemeToggle />
             <Link
-              href="/login"
+              href="/partner-request"
               className="px-5 py-2 rounded-[20px] border-2 border-[var(--color-primary)] text-[var(--color-primary)] font-medium text-sm hover:bg-[var(--color-primary)] hover:text-white transition-all"
             >
               For Partners
@@ -220,7 +220,7 @@ export default function LandingPage() {
                   Explore Restaurants
                 </Link>
                 <Link
-                  href="/login"
+                  href="/partner-request"
                   className="inline-flex items-center gap-2 px-8 py-4 rounded-[25px] border-2 border-white text-white font-semibold text-base hover:bg-white/10 transition-all"
                 >
                   Partner With Us

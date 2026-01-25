@@ -2,7 +2,14 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 import { successResponse, errorResponse, unauthorizedResponse, notFoundResponse } from '@/lib/api-response'
-import { updateReservationSchema } from '@/lib/validations'
+import { z } from 'zod'
+
+const updateReservationSchema = z.object({
+  timeFrom: z.string().optional(),
+  timeTo: z.string().optional(),
+  numberOfPeople: z.number().int().min(1).max(100).optional(),
+  status: z.enum(['PENDING', 'CONFIRMED', 'SEATED', 'COMPLETED', 'CANCELLED']).optional(),
+})
 
 export async function GET(
   request: NextRequest,
@@ -83,13 +90,6 @@ export async function PATCH(
       return notFoundResponse()
     }
 
-    // Validate table if provided
-    if (validatedData.tableId) {
-      if (!restaurant.tableLayout.includes(validatedData.tableId)) {
-        return errorResponse('Invalid table ID', 400)
-      }
-    }
-
     const updateData: any = {}
     if (validatedData.timeFrom) {
       updateData.timeFrom = new Date(validatedData.timeFrom)
@@ -97,8 +97,11 @@ export async function PATCH(
     if (validatedData.timeTo) {
       updateData.timeTo = new Date(validatedData.timeTo)
     }
-    if (validatedData.tableId !== undefined) {
-      updateData.tableId = validatedData.tableId
+    if (validatedData.numberOfPeople !== undefined) {
+      updateData.numberOfPeople = validatedData.numberOfPeople
+    }
+    if (validatedData.status !== undefined) {
+      updateData.status = validatedData.status
     }
 
     const updatedReservation = await prisma.reservation.update({
@@ -115,4 +118,3 @@ export async function PATCH(
     return errorResponse('Failed to update reservation', 500)
   }
 }
-

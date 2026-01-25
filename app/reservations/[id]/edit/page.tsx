@@ -15,46 +15,21 @@ export default function EditReservationPage() {
   const reservationId = params.id as string
 
   const [reservation, setReservation] = useState<any>(null)
-  const [restaurant, setRestaurant] = useState<any>(null)
-  const [availableTables, setAvailableTables] = useState<string[]>([])
-  const [occupiedTables, setOccupiedTables] = useState<string[]>([])
   const [formData, setFormData] = useState({
     timeFrom: '',
     timeTo: '',
-    tableId: '',
+    numberOfPeople: 1,
+    status: 'CONFIRMED',
   })
   const [isLoading, setIsLoading] = useState(true)
-  const [isLoadingTables, setIsLoadingTables] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isCancelling, setIsCancelling] = useState(false)
   const [error, setError] = useState('')
-
-  const fetchAvailableTables = useCallback(async (timeFrom: string, timeTo: string) => {
-    if (!timeFrom || !timeTo) return
-
-    try {
-      setIsLoadingTables(true)
-      const response = await apiClient.get(
-        `/restaurants/available-tables?timeFrom=${encodeURIComponent(timeFrom)}&timeTo=${encodeURIComponent(timeTo)}&excludeReservationId=${reservationId}`
-      ) as any
-
-      if (response?.success) {
-        setAvailableTables(response.data.availableTables || [])
-        setOccupiedTables(response.data.occupiedTables || [])
-      }
-    } catch (err: any) {
-      console.error('Failed to fetch available tables:', err)
-    } finally {
-      setIsLoadingTables(false)
-    }
-  }, [reservationId])
 
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true)
-      const [reservationRes, restaurantRes] = await Promise.all([
-        apiClient.get(`/reservations/${reservationId}`),
-        apiClient.get('/restaurants/me'),
-      ]) as any[]
+      const reservationRes = await apiClient.get(`/reservations/${reservationId}`) as any
 
       if (reservationRes?.success) {
         const res = reservationRes.data
@@ -64,64 +39,37 @@ export default function EditReservationPage() {
         setFormData({
           timeFrom: timeFromFormatted,
           timeTo: timeToFormatted,
-          tableId: res.tableId || '',
+          numberOfPeople: res.numberOfPeople,
+          status: res.status,
         })
-        // Fetch available tables for initial time slot
-        await fetchAvailableTables(
-          new Date(res.timeFrom).toISOString(),
-          new Date(res.timeTo).toISOString()
-        )
-      }
-
-      if (restaurantRes?.success) {
-        setRestaurant(restaurantRes.data)
       }
     } catch (err: any) {
       setError(err.error || 'Failed to load reservation')
     } finally {
       setIsLoading(false)
     }
-  }, [reservationId, fetchAvailableTables])
+  }, [reservationId])
 
   useEffect(() => {
     fetchData()
   }, [fetchData])
 
-  // Refetch available tables when time changes
-  const handleTimeChange = (field: 'timeFrom' | 'timeTo', value: string) => {
-    const newFormData = { ...formData, [field]: value }
-    setFormData(newFormData)
-
-    // If both times are set, fetch available tables
-    if (newFormData.timeFrom && newFormData.timeTo) {
-      fetchAvailableTables(
-        new Date(newFormData.timeFrom).toISOString(),
-        new Date(newFormData.timeTo).toISOString()
-      )
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-
-    // Validate that selected table is available
-    if (formData.tableId && !availableTables.includes(formData.tableId)) {
-      setError('The selected table is not available for this time slot. Please choose a different table.')
-      return
-    }
-
     setIsSaving(true)
 
     try {
-      const payload: any = {}
-      if (formData.timeFrom) payload.timeFrom = new Date(formData.timeFrom).toISOString()
-      if (formData.timeTo) payload.timeTo = new Date(formData.timeTo).toISOString()
-      if (formData.tableId !== undefined) payload.tableId = formData.tableId || null
+      const payload: any = {
+        timeFrom: new Date(formData.timeFrom).toISOString(),
+        timeTo: new Date(formData.timeTo).toISOString(),
+        numberOfPeople: formData.numberOfPeople,
+        status: formData.status,
+      }
 
       const response = await apiClient.patch(`/reservations/${reservationId}`, payload) as any
       if (response.success) {
-        router.push('/dashboard')
+        router.push('/reservations')
       }
     } catch (err: any) {
       setError(err.error || 'Failed to update reservation')
@@ -129,6 +77,26 @@ export default function EditReservationPage() {
       setIsSaving(false)
     }
   }
+
+  const handleCancelReservation = async () => {
+    if (!confirm('Are you sure you want to cancel this reservation? This action cannot be undone.')) return
+    
+    setError('')
+    setIsCancelling(true)
+
+    try {
+      const response = await apiClient.patch(`/reservations/${reservationId}`, { status: 'CANCELLED' }) as any
+      if (response.success) {
+        router.push('/reservations')
+      }
+    } catch (err: any) {
+      setError(err.error || 'Failed to cancel reservation')
+    } finally {
+      setIsCancelling(false)
+    }
+  }
+
+  const isPastReservation = reservation ? new Date(reservation.timeTo) < new Date() : false
 
   if (isLoading) {
     return (
@@ -155,8 +123,6 @@ export default function EditReservationPage() {
     )
   }
 
-  const currentTableIsOccupied = Boolean(formData.tableId && occupiedTables.includes(formData.tableId))
-
   return (
     <Layout>
       <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
@@ -169,25 +135,12 @@ export default function EditReservationPage() {
             </div>
           )}
 
-          {/* Warning for unassigned table */}
-          {!reservation.tableId && (
-            <div className="bg-[var(--warning)]/20 border border-[var(--warning)]/50 text-[var(--warning)] px-3 sm:px-4 py-2 sm:py-3 rounded-lg mb-4 sm:mb-6 flex items-start sm:items-center gap-2 text-sm">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5 sm:mt-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <span>No table assigned. Please assign a table below.</span>
-            </div>
-          )}
-
           <div className="mb-4 sm:mb-6 space-y-1.5 sm:space-y-2">
             <p className="text-[var(--text-secondary)] text-sm sm:text-base">
               <span className="font-semibold text-[var(--text-primary)]">Guest:</span> {reservation.guestName}
             </p>
             <p className="text-[var(--text-secondary)] text-sm sm:text-base">
               <span className="font-semibold text-[var(--text-primary)]">Contact:</span> {reservation.guestContact}
-            </p>
-            <p className="text-[var(--text-secondary)] text-sm sm:text-base">
-              <span className="font-semibold text-[var(--text-primary)]">Party Size:</span> {reservation.numberOfPeople}
             </p>
           </div>
 
@@ -197,7 +150,7 @@ export default function EditReservationPage() {
                 label="From"
                 type="datetime-local"
                 value={formData.timeFrom}
-                onChange={(e) => handleTimeChange('timeFrom', e.target.value)}
+                onChange={(e) => setFormData({ ...formData, timeFrom: e.target.value })}
                 required
               />
 
@@ -205,94 +158,69 @@ export default function EditReservationPage() {
                 label="To"
                 type="datetime-local"
                 value={formData.timeTo}
-                onChange={(e) => handleTimeChange('timeTo', e.target.value)}
+                onChange={(e) => setFormData({ ...formData, timeTo: e.target.value })}
                 required
               />
             </div>
 
-            {restaurant && (
-              <div>
-                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                  <label className="block text-sm font-medium text-[var(--text-secondary)]">
-                    Table
-                  </label>
-                  {isLoadingTables && (
-                    <svg className="animate-spin h-4 w-4 text-[var(--text-muted)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  )}
-                </div>
-                <select
-                  className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-[var(--bg-card)] border text-sm sm:text-base text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] shadow-sm ${
-                    currentTableIsOccupied ? 'border-[var(--warning)]' : 'border-[var(--border-color)]'
-                  }`}
-                  value={formData.tableId}
-                  onChange={(e) => setFormData({ ...formData, tableId: e.target.value })}
+            <Input
+              label="Number of Guests"
+              type="number"
+              min={1}
+              max={100}
+              value={formData.numberOfPeople}
+              onChange={(e) => setFormData({ ...formData, numberOfPeople: parseInt(e.target.value) || 1 })}
+              required
+            />
+
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5 sm:mb-2">
+                Status
+              </label>
+              <select
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-sm sm:text-base text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] shadow-sm"
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              >
+                <option value="CONFIRMED">Confirmed</option>
+                <option value="PENDING">Pending</option>
+                <option value="SEATED">Seated</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+
+            {/* Cancel Reservation - dangerous action */}
+            {reservation.status !== 'CANCELLED' && !isPastReservation && (
+              <div className="border-t border-[var(--border-color)] pt-4 mt-2">
+                <p className="text-sm text-[var(--text-muted)] mb-3">
+                  Cancelling a reservation will notify the guest and cannot be undone.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="!border-[var(--error)] !text-[var(--error)] hover:!bg-[var(--error)]/10"
+                  onClick={handleCancelReservation}
+                  isLoading={isCancelling}
                 >
-                  <option value="">No table assigned (TBD)</option>
-                  
-                  {/* Available tables */}
-                  {availableTables.length > 0 && (
-                    <optgroup label="✓ Available">
-                      {availableTables.map((tableId: string) => (
-                        <option key={tableId} value={tableId}>
-                          {tableId}
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
-                  
-                  {/* Show occupied tables as disabled for reference */}
-                  {occupiedTables.length > 0 && (
-                    <optgroup label="✗ Occupied at this time">
-                      {occupiedTables.map((tableId: string) => (
-                        <option key={tableId} value={tableId} disabled className="text-[var(--text-muted)]">
-                          {tableId} (occupied)
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
-                </select>
-
-                {/* Status info */}
-                <div className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-[var(--text-muted)]">
-                  {availableTables.length === 0 && !isLoadingTables ? (
-                    <span className="text-[var(--warning)]">
-                      No tables available for this time slot
-                    </span>
-                  ) : (
-                    <span>
-                      {availableTables.length} table{availableTables.length !== 1 ? 's' : ''} available for this time slot
-                    </span>
-                  )}
-                </div>
-
-                {currentTableIsOccupied && (
-                  <div className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-[var(--warning)] flex items-start gap-1">
-                    <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <span>Selected table is occupied. Please select a different table.</span>
-                  </div>
-                )}
+                  Cancel Reservation
+                </Button>
               </div>
             )}
 
-            <div className="flex gap-2 sm:gap-4 pt-2">
+            <div className="flex gap-2 sm:gap-4 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.back()}
                 className="flex-1 text-sm sm:text-base py-2.5 sm:py-3"
               >
-                Cancel
+                Close
               </Button>
               <Button 
                 type="submit" 
                 isLoading={isSaving} 
                 className="flex-1 text-sm sm:text-base py-2.5 sm:py-3"
-                disabled={currentTableIsOccupied}
               >
                 Save Changes
               </Button>

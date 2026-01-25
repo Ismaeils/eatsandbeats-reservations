@@ -8,9 +8,12 @@ export function middleware(request: NextRequest) {
   const publicRoutes = [
     '/api/auth/register',
     '/api/auth/login',
+    '/api/auth/admin/login', // Admin login endpoint
     '/api/auth/forgot-password',
     '/api/auth/reset-password',
     '/api/reservations/create', // Guest endpoint
+    '/api/requests', // Public restaurant request submission (POST only)
+    '/api/public', // All public API routes
   ]
   const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route))
   

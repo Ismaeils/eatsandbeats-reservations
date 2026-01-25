@@ -1,8 +1,10 @@
 'use client'
 
 import PublicReservationModal from '@/components/PublicReservationModal'
+import LocaleSelectionModal from '@/components/LocaleSelectionModal'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useLocale } from '@/contexts/LocaleContext'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
@@ -11,6 +13,7 @@ interface Restaurant {
   id: string
   name: string
   logoUrl?: string
+  photos?: string[]
   address: string
   cuisines: string[]
   district: string
@@ -54,6 +57,7 @@ const COVER_IMAGES = [
 
 export default function RestaurantsPage() {
   const { theme } = useTheme()
+  const { country, isLoaded: localeLoaded } = useLocale()
   const logoSrc = theme === 'dark' 
     ? '/uploads/eatsnbeats-light.png'
     : '/uploads/eatsnbeats-dark.png'
@@ -75,11 +79,15 @@ export default function RestaurantsPage() {
   const [isLoadingDetails, setIsLoadingDetails] = useState(false)
 
   const fetchRestaurants = useCallback(async () => {
+    // Don't fetch until locale is loaded
+    if (!localeLoaded) return
+    
     try {
       setIsLoading(true)
       const params = new URLSearchParams()
       if (searchQuery) params.set('search', searchQuery)
       if (selectedCuisine) params.set('cuisine', selectedCuisine)
+      if (country) params.set('country', country)
       params.set('page', currentPage.toString())
       params.set('limit', '12')
 
@@ -98,7 +106,7 @@ export default function RestaurantsPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [searchQuery, selectedCuisine, currentPage])
+  }, [searchQuery, selectedCuisine, currentPage, country, localeLoaded])
 
   useEffect(() => {
     fetchRestaurants()
@@ -162,7 +170,7 @@ export default function RestaurantsPage() {
             </Link>
             <ThemeToggle />
             <Link
-              href="/login"
+              href="/partner-request"
               className="px-5 py-2 rounded-[20px] border-2 border-[var(--color-primary)] text-[var(--color-primary)] font-medium text-sm hover:bg-[var(--color-primary)] hover:text-white transition-all"
             >
               For Partners
@@ -278,23 +286,11 @@ export default function RestaurantsPage() {
                     {/* Cover Image */}
                     <div className="relative h-48 overflow-hidden">
                       <Image
-                        src={restaurant.logoUrl || getCoverImage(index)}
+                        src={restaurant.photos?.[0] || restaurant.logoUrl || getCoverImage(index)}
                         alt={restaurant.name}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      {/* Favorite button */}
-                      <button className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/80 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-white dark:hover:bg-black/70 transition-all">
-                        <svg className="w-5 h-5 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                      </button>
-                      {/* Top rated badge (random for now) */}
-                      {index === 0 && (
-                        <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-[var(--color-primary)] text-white text-xs font-semibold">
-                          TOP RATED
-                        </div>
-                      )}
                     </div>
 
                     {/* Content */}
@@ -326,11 +322,13 @@ export default function RestaurantsPage() {
                         >
                           Reserve Now
                         </button>
-                        <button className="w-10 h-10 rounded-[15px] bg-[var(--bg-hover)] flex items-center justify-center hover:bg-[var(--border-color)] transition-all">
-                          <svg className="w-5 h-5 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        </button>
+                        <Link href={`/restaurants/${restaurant.id}`}>
+                          <button className="w-10 h-10 rounded-[15px] bg-[var(--bg-hover)] flex items-center justify-center hover:bg-[var(--border-color)] transition-all">
+                            <svg className="w-5 h-5 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </button>
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -374,7 +372,7 @@ export default function RestaurantsPage() {
             <div className="flex flex-wrap justify-center gap-6 text-sm text-[var(--text-muted)]">
               <Link href="#" className="hover:text-[var(--text-primary)] transition-colors">About Us</Link>
               <Link href="#" className="hover:text-[var(--text-primary)] transition-colors">Privacy</Link>
-              <Link href="/login" className="hover:text-[var(--text-primary)] transition-colors">Partner with Us</Link>
+              <Link href="/partner-request" className="hover:text-[var(--text-primary)] transition-colors">Partner with Us</Link>
               <Link href="#" className="hover:text-[var(--text-primary)] transition-colors">Contact</Link>
             </div>
             <p className="text-sm text-[var(--text-muted)]">
@@ -395,6 +393,9 @@ export default function RestaurantsPage() {
           }}
         />
       )}
+
+      {/* Locale Selection Modal - shows on first visit */}
+      <LocaleSelectionModal />
     </div>
   )
 }

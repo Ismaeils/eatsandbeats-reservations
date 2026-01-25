@@ -1,7 +1,19 @@
 import { errorResponse, successResponse } from '@/lib/api-response'
+import { sendReservationConfirmedEmail, sendReservationPendingEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
+import { format } from 'date-fns'
+
+// Generate a unique confirmation code
+function generateConfirmationCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // Avoid confusing characters
+  let code = ''
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return code
+}
 
 const createReservationSchema = z.object({
   invitationToken: z.string().optional(),
@@ -17,7 +29,6 @@ const createReservationSchema = z.object({
     (val) => !isNaN(Date.parse(val)),
     { message: 'Invalid end time format' }
   ),
-  tableId: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -65,11 +76,6 @@ export async function POST(request: NextRequest) {
       return errorResponse('Restaurant not found', 404)
     }
 
-    // Validate table if provided
-    if (validatedData.tableId && !restaurant.tableLayout.includes(validatedData.tableId)) {
-      return errorResponse('Invalid table ID', 400)
-    }
-
     // Parse dates
     const timeFrom = new Date(validatedData.timeFrom)
     const timeTo = new Date(validatedData.timeTo)
@@ -93,20 +99,38 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Check maxSimultaneousReservations capacity
+    const overlappingCount = await prisma.reservation.count({
+      where: {
+        restaurantId,
+        status: { in: ['CONFIRMED', 'PENDING', 'SEATED'] },
+        timeFrom: { lt: timeTo },
+        timeTo: { gt: timeFrom },
+      },
+    })
+
+    if (overlappingCount >= restaurant.maxSimultaneousReservations) {
+      return errorResponse('This time slot is fully booked. Please choose a different time.', 400)
+    }
+
+    // Determine status based on auto-confirm setting
+    const status = restaurant.autoConfirmReservations ? 'CONFIRMED' : 'PENDING'
+    const confirmationCode = generateConfirmationCode()
+
     // Create reservation
     const reservation = await prisma.$transaction(async (tx: any) => {
       const newReservation = await tx.reservation.create({
         data: {
           restaurantId,
-          invitationId: invitationId || null, // Allow null if no invitation
+          invitationId: invitationId || null,
+          confirmationCode,
           guestName: validatedData.guestName,
           guestContact: validatedData.guestContact,
           numberOfPeople: validatedData.numberOfPeople,
           timeFrom,
           timeTo,
-          tableId: validatedData.tableId || null,
           depositAmount: restaurant.reservationDeposit,
-          status: 'CONFIRMED', // Set to CONFIRMED initially, can be changed to PENDING if payment required
+          status,
         },
       })
 
@@ -121,35 +145,47 @@ export async function POST(request: NextRequest) {
       return newReservation
     })
 
-    // TODO: Initiate payment flow
-    // For now, we'll create the reservation as PENDING
-    // Payment integration will be added later
+    // Send appropriate email based on status
+    const isEmailContact = validatedData.guestContact.includes('@')
+    if (isEmailContact) {
+      const emailData = {
+        guestName: validatedData.guestName,
+        guestEmail: validatedData.guestContact,
+        restaurantName: restaurant.name,
+        confirmationCode,
+        date: format(timeFrom, 'EEEE, MMMM d, yyyy'),
+        time: format(timeFrom, 'h:mm a'),
+        numberOfPeople: validatedData.numberOfPeople,
+      }
+
+      if (status === 'CONFIRMED') {
+        await sendReservationConfirmedEmail(emailData)
+      } else {
+        await sendReservationPendingEmail(emailData)
+      }
+    }
+
+    const message = status === 'CONFIRMED' 
+      ? 'Reservation confirmed successfully.' 
+      : 'Reservation request submitted. Awaiting approval from the restaurant.'
 
     return successResponse(
       {
         reservation,
         paymentRequired: restaurant.reservationDeposit > 0,
         depositAmount: restaurant.reservationDeposit,
+        status,
+        confirmationCode,
       },
-      'Reservation created. Payment required to confirm.'
+      message
     )
   } catch (error: any) {
     if (error.name === 'ZodError') {
       console.error('Validation error:', error.errors)
       return errorResponse(error.errors[0].message, 400)
     }
-    console.log('Whatever error:', error)
-
     console.error('Create reservation error:', error)
-    console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      meta: error.meta,
-      stack: error.stack,
-    })
-    // Return more specific error message
     const errorMessage = error.message || 'Failed to create reservation'
     return errorResponse(errorMessage, 500)
   }
 }
-

@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       logoUrl: restaurant.logoUrl,
       reservationDuration: restaurant.reservationDuration || 120,
       slotGranularity: restaurant.slotGranularity || 15,
-      tableLayout: restaurant.tableLayout,
+      maxSimultaneousReservations: restaurant.maxSimultaneousReservations,
       openingHours: restaurant.openingHours.map(h => ({
         dayOfWeek: h.dayOfWeek,
         isOpen: h.isOpen,
