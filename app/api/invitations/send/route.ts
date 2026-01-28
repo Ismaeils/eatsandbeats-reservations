@@ -6,16 +6,6 @@ import { randomBytes } from 'crypto'
 import { NextRequest } from 'next/server'
 
 function getBaseUrl(request: NextRequest): string {
-  // First, try to use the explicitly configured URL
-  if (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')) {
-    return process.env.NEXT_PUBLIC_APP_URL
-  }
-
-  // On Vercel, use the automatic environment variables
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`
-  }
-
   // Fallback: extract from request headers (works for any deployment)
   const host = request.headers.get('host')
   const protocol = request.headers.get('x-forwarded-proto') || 'https'
